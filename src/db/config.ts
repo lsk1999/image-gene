@@ -6,6 +6,8 @@ config({ path: ".env" });
 config({ path: ".env.development" });
 config({ path: ".env.local" });
 
+
+
 export default defineConfig({
   out: "./src/db/migrations",
   schema: "./src/db/schema.ts",
