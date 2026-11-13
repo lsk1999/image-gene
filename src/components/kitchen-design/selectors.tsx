@@ -21,12 +21,12 @@ export function ImageChoice({ title, description, image, imageAlt, selected, onC
 }
 
 export function ScopeSelector({ state, update }: { state: KitchenDesignState; update: UpdateDesign }) {
-  const selectedScope = scopes.find(scope => scope.name === state.renovationScope);
+  const selectedScope = scopes.find(scope => scope.name === state.designScope);
   return <div className="space-y-3">
     <div className="grid grid-cols-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-1">
       {scopes.map(scope => {
-        const selected = state.renovationScope === scope.name;
-        return <button key={scope.name} type="button" aria-pressed={selected} onClick={() => update({ renovationScope: scope.name })} className={`flex min-h-16 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-center text-[11px] font-medium leading-4 transition-colors focus-visible:outline-2 focus-visible:outline-primary sm:text-xs ${selected ? "bg-white text-primary shadow-sm ring-1 ring-slate-200" : "text-slate-600 hover:bg-white/70 hover:text-slate-900"}`}>{selected && <Check size={13} className="shrink-0" />}<span>{scope.name}</span></button>;
+        const selected = state.designScope === scope.name;
+        return <button key={scope.name} type="button" aria-pressed={selected} onClick={() => update({ designScope: scope.name })} className={`flex min-h-16 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-center text-[11px] font-medium leading-4 transition-colors focus-visible:outline-2 focus-visible:outline-primary sm:text-xs ${selected ? "bg-white text-primary shadow-sm ring-1 ring-slate-200" : "text-slate-600 hover:bg-white/70 hover:text-slate-900"}`}>{selected && <Check size={13} className="shrink-0" />}<span>{scope.name}</span></button>;
       })}
     </div>
     <div className={`rounded-lg border px-3.5 py-3 text-xs leading-5 ${selectedScope ? "border-primary/20 bg-primary/[0.03] text-slate-600" : "border-slate-200 bg-slate-50 text-slate-500"}`}>

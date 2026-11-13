@@ -1,19 +1,19 @@
-export const steps = ["Upload Kitchen Photo", "Design Style", "Renovation Scope", "Areas & Materials", "Custom Preferences", "Generate & Refine"];
+export const steps = ["Upload Kitchen Photo", "Design Style", "Design Scope", "Areas & Materials", "Custom Preferences", "Generate & Refine"];
 export const scopes = [
   {
-    name: "Cosmetic Refresh",
+    name: "Visual Refresh",
     description:
-      "Best for a visual update without construction. Keep the layout, cabinet positions, appliances, and major fixtures while refreshing colors, finishes, hardware, and decorative details.",
+      "Update colors, finishes, hardware, and styling while keeping the existing layout and main kitchen elements.",
   },
   {
-    name: "Partial Renovation",
+    name: "Selected Areas",
     description:
-      "Best for replacing selected features. Keep the room structure and main utility locations while updating cabinetry, countertops, backsplash, lighting, sink, or appliances.",
+      "Redesign only the parts you choose, such as cabinets, countertops, backsplash, lighting, sink, or appliances.",
   },
   {
-    name: "Full Renovation",
+    name: "Complete Design",
     description:
-      "Best for a complete transformation. Rework cabinetry, island, appliance placement, and the overall layout while respecting every feature you choose to preserve.",
+      "Design the whole kitchen from scratch or fully rethink an existing one, including its layout, cabinetry, island, and appliance placement.",
   },
 ];
 export const styles = [
@@ -72,7 +72,7 @@ export const areas: Record<string, { description: string; options: string[] }> =
 };
 export interface KitchenDesignState {
   originalImage: { url: string; name: string } | null;
-  renovationScope: string;
+  designScope: string;
   designStyle: string;
   selectedAreas: string[];
   materialPreferences: Record<string, { value: string; custom: string }>;
@@ -88,7 +88,7 @@ export interface KitchenDesignState {
   }[];
 }
 export const initialState: KitchenDesignState = {
-  originalImage: null, renovationScope: "", designStyle: "",
+  originalImage: null, designScope: "", designStyle: "",
   selectedAreas: [], materialPreferences: {},
   customPreferences: "", generationResults: [], favoriteId: null,
   generationHistory: [],

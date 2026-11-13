@@ -16,6 +16,12 @@ import { generateKitchenDesign } from "./api";
 
 const storageKey = "shipany-kitchen-design-v2";
 
+const scopeMigrations: Record<string, string> = {
+  "Cosmetic Refresh": "Visual Refresh",
+  "Partial Renovation": "Selected Areas",
+  "Full Renovation": "Complete Design",
+};
+
 const materialPreferenceMigrations: Record<string, Record<string, string>> = {
   Cabinets: { White: "White Painted MDF", Walnut: "Walnut Veneer", Black: "Matte Black", "Navy Blue": "Navy Painted", "Sage Green": "Sage Green Painted" },
   Countertops: { Quartz: "Engineered Quartz" },
@@ -82,10 +88,13 @@ export default function KitchenDesignPage() {
           delete savedState.imageQuality;
           delete savedState.preservationSettings;
           delete savedState.customStyle;
+          const savedScope = savedState.designScope || savedState.renovationScope || "";
+          delete savedState.renovationScope;
           setState({
             ...initialState,
             ...savedState,
             designStyle: savedState.designStyle === "Custom" ? "" : savedState.designStyle,
+            designScope: scopeMigrations[savedScope] || savedScope,
             materialPreferences: migrateMaterialPreferences(savedState.materialPreferences),
             generationHistory: Array.isArray(savedState.generationHistory)
               ? savedState.generationHistory
@@ -131,8 +140,8 @@ export default function KitchenDesignPage() {
     if (!state.originalImage) {
       return "Upload a kitchen photo or choose a sample kitchen before generating.";
     }
-    if (!state.renovationScope) {
-      return "Choose a renovation scope before generating.";
+    if (!state.designScope) {
+      return "Choose a design scope before generating.";
     }
     if (!state.designStyle) {
       return "Choose a design style before generating.";
@@ -164,12 +173,12 @@ export default function KitchenDesignPage() {
       const results = await generateKitchenDesign(state, abort.signal);
       const generatedAt = new Date().toISOString();
       const style = state.designStyle;
-      const summary = `${style} · ${state.renovationScope}`;
+      const summary = `${style} · ${state.designScope}`;
       const snapshot = JSON.stringify({
         originalImage: state.originalImage
           ? { name: state.originalImage.name }
           : null,
-        renovationScope: state.renovationScope,
+        designScope: state.designScope,
         designStyle: state.designStyle,
         selectedAreas: state.selectedAreas,
         materialPreferences: state.materialPreferences,
@@ -210,11 +219,11 @@ export default function KitchenDesignPage() {
     <div className="min-h-screen bg-slate-50/70 text-slate-900">
       <div className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
         <div className="grid items-start gap-6 lg:grid-cols-[440px_minmax(0,1fr)] xl:grid-cols-[500px_minmax(0,1fr)]">
-          <aside className="overflow-hidden rounded-2xl border border-slate-200 bg-white lg:sticky lg:top-5 lg:flex lg:h-[calc(100dvh-250px)] lg:min-h-[600px] lg:flex-col">
+          <aside className="overflow-hidden rounded-2xl border border-slate-200 bg-white lg:sticky lg:top-5 lg:flex lg:h-[calc(100dvh-180px)] lg:min-h-[680px] lg:flex-col">
             <div className="shrink-0 border-b border-slate-200 p-4">
-              <div className="flex items-center justify-between rounded-lg border border-slate-200 px-3.5 py-2.5">
-                <span className="flex items-center gap-2.5 text-sm font-medium">
-                  <ImageIcon size={17} className="text-primary" /> Kitchen Design
+              <div className="flex min-h-14 items-center justify-between rounded-lg border border-slate-200 px-4 py-3">
+                <span className="flex items-center gap-2.5 text-base font-medium">
+                  <ImageIcon size={18} className="text-primary" /> Kitchen Design
                 </span>
                 <ChevronDown size={18} className="text-slate-400" />
               </div>
@@ -238,7 +247,7 @@ export default function KitchenDesignPage() {
               </ConfigSection>
 
               <ConfigSection
-                title="Renovation Scope"
+                title="Design Scope"
               >
                 <ScopeSelector state={state} update={update} />
               </ConfigSection>

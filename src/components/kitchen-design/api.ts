@@ -5,7 +5,7 @@ import type { KitchenDesignState } from "./data";
 export function buildKitchenPrompt(state: KitchenDesignState) {
   return [
     "Photorealistic kitchen interior design concept, architectural photography.",
-    `Renovation scope: ${state.renovationScope}.`,
+    `Design scope: ${state.designScope}.`,
     `Style: ${state.designStyle}.`,
     ...state.selectedAreas.map(area => {
       const preference = state.materialPreferences[area];
