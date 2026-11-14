@@ -77,6 +77,9 @@ function AreaCard({ area, config, state, update }: SelectorProps & {
 }) {
   const enabled = state.selectedAreas.includes(area);
   const preference = state.materialPreferences[area] || { value: "Keep original", custom: "" };
+  const status = enabled
+    ? preference.value === "Keep original" ? "Keep original" : "Customize"
+    : state.designScope === "Selected Areas" ? "No area setting" : "AI decides";
   const changePreference = (patch: Partial<typeof preference>) => update({
     materialPreferences: { ...state.materialPreferences, [area]: { ...preference, ...patch } },
   });
@@ -92,7 +95,7 @@ function AreaCard({ area, config, state, update }: SelectorProps & {
         <span>
           <span className="block font-medium">
             {area}
-            <span className="ml-3 text-xs font-normal text-slate-500">{enabled ? "Customize" : "AI decides"}</span>
+            <span className="ml-3 text-xs font-normal text-slate-500">{status}</span>
           </span>
           <span className="mt-1 block text-xs leading-5 text-slate-500">{config.description}</span>
         </span>
@@ -122,7 +125,9 @@ export function AreasSelector({ state, update }: SelectorProps) {
   return (
     <div className="space-y-3">
       <p className="mb-3 text-xs leading-5 text-slate-500">
-        Choose materials and finishes only for the areas you want to customize. Unselected areas will be designed by AI to match your chosen style.
+        {state.designScope === "Selected Areas"
+          ? "Choose a change here or describe it in Custom Preferences. Anything you don’t ask to change stays as is. Use Keep original to preserve a specific area."
+          : "Choose materials and finishes only for the areas you want to customize. Unselected areas will be designed by AI to match your chosen style."}
       </p>
       {areaEntries.map(([area, config], index) => (
         <div key={area} className={!expanded && index >= 4 && !state.selectedAreas.includes(area) ? "hidden" : "block"}>
@@ -135,5 +140,32 @@ export function AreasSelector({ state, update }: SelectorProps) {
 }
 
 export function AdditionalRequirements({ state, update }: { state: KitchenDesignState; update: UpdateDesign }) {
-  return <div><Textarea id="kitchen-preferences" aria-label="Additional requirements" rows={6} maxLength={3000} placeholder="Add any other requirements…" value={state.customPreferences} onChange={event => update({ customPreferences: event.target.value })} /><div className="mt-3 flex flex-wrap gap-2">{["Keep the existing layout.", "Make the room brighter and warmer.", "Add more closed storage.", "Create a more open feeling."].map(text => <button key={text} type="button" className="rounded-full bg-slate-100 px-3 py-2 text-xs hover:bg-slate-200" onClick={() => update({ customPreferences: `${state.customPreferences}${state.customPreferences ? "\n" : ""}${text}`.slice(0, 3000) })}>+ {text}</button>)}</div></div>;
+  const selectedAreas = state.designScope === "Selected Areas";
+  const completeDesign = state.designScope === "Complete Design";
+  const suggestions = selectedAreas
+    ? ["Replace the window blinds with a linen shade.", "Paint the exposed wall warm white."]
+    : completeDesign
+      ? ["Add more closed storage.", "Create a more open feeling."]
+      : ["Keep the existing layout.", "Make the room brighter and warmer.", "Add more closed storage.", "Create a more open feeling."];
+  return (
+    <div>
+      <Textarea
+        id="kitchen-preferences"
+        aria-label="Additional requirements"
+        rows={6}
+        maxLength={3000}
+        placeholder={selectedAreas ? "Describe what to change, e.g. replace the window blinds with a linen shade." : "Add any other requirements…"}
+        value={state.customPreferences}
+        onChange={event => update({ customPreferences: event.target.value })}
+      />
+      <div className="mt-3 flex flex-wrap gap-2">
+        {suggestions.map(text => (
+          <button key={text} type="button" className="rounded-full bg-slate-100 px-3 py-2 text-xs hover:bg-slate-200"
+            onClick={() => update({ customPreferences: [state.customPreferences, text].filter(Boolean).join("\n").slice(0, 3000) })}>
+            + {text}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }

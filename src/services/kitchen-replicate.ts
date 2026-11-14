@@ -27,15 +27,31 @@ export function kitchenReplicate() {
 
   return {
     model: `replicate/${model}`,
-    async generate(prompt: string, sourceUrl: string) {
-      const signal = AbortSignal.timeout(240_000);
+    async generate(
+      prompt: string,
+      sourceUrl: string,
+      { timeoutSeconds = 240, promptUpsampling }: {
+        timeoutSeconds?: number;
+        promptUpsampling?: boolean;
+      } = {},
+    ) {
+      const signal = AbortSignal.timeout(timeoutSeconds * 1000);
       let predictionId: string | undefined;
       let succeeded = false;
       try {
         // Never automatically retry creation: the first request may already be billed.
         const created = await fetch(`${API}/models/${model}/predictions`, {
-          method: "POST", headers: { ...headers, Prefer: "wait=60", "Cancel-After": "240s" }, signal,
-          body: JSON.stringify({ input: { prompt, input_image: sourceUrl, aspect_ratio: "match_input_image", output_format: "png", safety_tolerance: 2 } }),
+          method: "POST", headers: { ...headers, Prefer: "wait=60", "Cancel-After": `${timeoutSeconds}s` }, signal,
+          body: JSON.stringify({
+            input: {
+              prompt,
+              input_image: sourceUrl,
+              aspect_ratio: "match_input_image",
+              output_format: "png",
+              safety_tolerance: 2,
+              prompt_upsampling: promptUpsampling,
+            },
+          }),
         });
         if (!created.ok) throw new Error(`Replicate creation failed (${created.status}).`);
         let prediction = parsePrediction(await created.json());

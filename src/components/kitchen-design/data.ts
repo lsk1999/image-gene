@@ -7,12 +7,12 @@ export const scopes = [
   {
     name: "Selected Areas",
     description:
-      "Redesign only the parts you choose, such as cabinets, countertops, backsplash, lighting, sink, or appliances.",
+      "Choose or describe what to change. Keep the existing layout and everything else as is.",
   },
   {
     name: "Complete Design",
     description:
-      "Design the whole kitchen from scratch or fully rethink an existing one, including its layout, cabinetry, island, and appliance placement.",
+      "Plan a new kitchen layout for the same room. Keep the walls, doors, and windows, and rethink the cabinetry, appliances, and island where space allows.",
   },
 ];
 export const styles = [
@@ -87,6 +87,18 @@ export interface KitchenDesignState {
     parameters?: Pick<KitchenDesignState, "designScope" | "designStyle" | "selectedAreas" | "materialPreferences" | "customPreferences">;
   }[];
 }
+
+export const selectedAreasRequired = "Choose a change in Areas & Materials or describe what to change in Custom Preferences.";
+
+export function hasAreaChange(preference: KitchenDesignState["materialPreferences"][string] | undefined) {
+  return Boolean(preference?.value && preference.value !== "Keep original");
+}
+
+export function hasRequestedAreaChange(settings: Pick<KitchenDesignState, "customPreferences" | "selectedAreas" | "materialPreferences">) {
+  return Boolean(settings.customPreferences.trim()) ||
+    settings.selectedAreas.some(area => hasAreaChange(settings.materialPreferences[area]));
+}
+
 export const initialState: KitchenDesignState = {
   originalImage: null, designScope: "", designStyle: "",
   selectedAreas: [], materialPreferences: {},

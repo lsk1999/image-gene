@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, ImageIcon, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { initialState, type KitchenDesignState } from "./data";
+import { hasRequestedAreaChange, initialState, selectedAreasRequired, type KitchenDesignState } from "./data";
 import {
   AreasSelector,
   AdditionalRequirements,
@@ -38,6 +38,7 @@ export default function KitchenDesignPage() {
   const [state, setState] = useState<KitchenDesignState>(initialState);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [refining, setRefining] = useState(false);
   const [ready, setReady] = useState(false);
   const controller = useRef<AbortController | null>(null);
   const { designScope, designStyle, selectedAreas, materialPreferences, customPreferences } = state;
@@ -63,6 +64,20 @@ export default function KitchenDesignPage() {
       ...patch,
     })), []);
 
+  function saveRefinement(run: KitchenDesignState["generationHistory"][number], parentId: string) {
+    setState((previous) => {
+      const stillViewingParent = previous.generationResults.some((result) => result.id === parentId);
+      return {
+        ...previous,
+        ...(stillViewingParent ? { generationResults: run.results, favoriteId: null } : {}),
+        generationHistory: [
+          run,
+          ...previous.generationHistory.filter((item) => item.id !== run.id),
+        ].slice(0, 50),
+      };
+    });
+  }
+
   function validate() {
     if (!state.originalImage) {
       return "Upload a kitchen photo before generating.";
@@ -81,11 +96,14 @@ export default function KitchenDesignPage() {
     if (missingCustomArea) {
       return `Describe your custom preference for ${missingCustomArea}.`;
     }
+    if (state.designScope === "Selected Areas" && !hasRequestedAreaChange(state)) {
+      return selectedAreasRequired;
+    }
     return "";
   }
 
   async function generate() {
-    if (controller.current) return;
+    if (controller.current || refining) return;
     const validationMessage = validate();
     if (validationMessage) {
       setError(validationMessage);
@@ -203,6 +221,7 @@ export default function KitchenDesignPage() {
                 <Button
                   size="lg"
                   className="h-14 w-full text-base"
+                  disabled={refining}
                   onClick={() => void generate()}
                 >
                   <Sparkles /> Generate Design
@@ -211,11 +230,14 @@ export default function KitchenDesignPage() {
             </div>
           </aside>
 
-          <div className="min-w-0 lg:sticky lg:top-5">
+          <div className="min-w-0">
             <KitchenDesignResults
               state={state}
               update={update}
               busy={busy}
+              refining={refining}
+              onRefiningChange={setRefining}
+              onRefinementSaved={saveRefinement}
               cancel={() => controller.current?.abort()}
               onError={setError}
             />
