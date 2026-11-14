@@ -8,9 +8,23 @@ import {
   timestamp,
   unique,
   uniqueIndex,
+  jsonb,
 } from "drizzle-orm/pg-core";
 
 // Users table
+export const kitchenGenerations = pgTable("kitchen_generations", {
+  uuid: varchar({ length: 255 }).primaryKey(),
+  user_uuid: varchar({ length: 255 }).notNull().references(() => users.uuid),
+  status: varchar({ length: 30 }).notNull(),
+  source_key: text().notNull(),
+  result_key: text(),
+  parameters: jsonb().notNull(),
+  prompt: text().notNull(),
+  model: varchar({ length: 100 }).notNull(),
+  created_at: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  updated_at: timestamp({ withTimezone: true }).notNull().defaultNow(),
+});
+
 export const users = pgTable(
   "users",
   {

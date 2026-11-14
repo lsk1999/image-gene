@@ -1,4 +1,3 @@
-export const steps = ["Upload Kitchen Photo", "Design Style", "Design Scope", "Areas & Materials", "Custom Preferences", "Generate & Refine"];
 export const scopes = [
   {
     name: "Visual Refresh",
@@ -79,12 +78,13 @@ export interface KitchenDesignState {
   customPreferences: string;
   generationResults: { id: string; url: string }[];
   favoriteId: string | null;
-  generationSnapshot?: string;
   generationHistory: {
     id: string;
     createdAt: string;
     results: { id: string; url: string }[];
     summary: string;
+    originalImage?: { url: string; name: string };
+    parameters?: Pick<KitchenDesignState, "designScope" | "designStyle" | "selectedAreas" | "materialPreferences" | "customPreferences">;
   }[];
 }
 export const initialState: KitchenDesignState = {

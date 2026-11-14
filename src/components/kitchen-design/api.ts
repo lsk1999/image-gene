@@ -1,30 +1,17 @@
 import type { KitchenDesignState } from "./data";
-
-// The existing endpoint is text-to-image only. Keep the full request together so
-// an image-conditioned provider can replace this adapter without changing the UI.
-export function buildKitchenPrompt(state: KitchenDesignState) {
-  return [
-    "Photorealistic kitchen interior design concept, architectural photography.",
-    `Design scope: ${state.designScope}.`,
-    `Style: ${state.designStyle}.`,
-    ...state.selectedAreas.map(area => {
-      const preference = state.materialPreferences[area];
-      return `${area}: ${preference?.value === "Custom" ? preference.custom : preference?.value || "Keep original"}.`;
-    }),
-    state.customPreferences.trim() ? `Additional preferences: ${state.customPreferences.trim()}` : "",
-  ].filter(Boolean).join("\n");
-}
+import { getDesignParameters } from "./draft";
 
 export async function generateKitchenDesign(state: KitchenDesignState, signal: AbortSignal) {
-  const response = await fetch("/api/demo/gen-image", {
-    method: "POST", headers: { "Content-Type": "application/json" }, signal,
-    body: JSON.stringify({ prompt: buildKitchenPrompt(state), provider: "openai", model: "dall-e-3" }),
-  });
-  if (!response.ok) throw new Error("The image service is unavailable. Please try again later.");
-  const payload = await response.json();
-  if (payload.code !== 0) throw new Error(payload.message || "Image generation failed.");
-  const images = Array.isArray(payload.data) ? payload.data : [];
-  const image = images.find((item: { url?: string }) => item.url && /^https?:\/\//.test(item.url));
-  if (!image) throw new Error("No downloadable image was returned. Check the image provider and storage configuration.");
-  return [{ id: crypto.randomUUID(), url: image.url }];
+  if (!state.originalImage) throw new Error("Upload a kitchen photo first.");
+  const source = await fetch(state.originalImage.url, { signal });
+  if (!source.ok) throw new Error("Please upload your kitchen photo again.");
+  const form = new FormData();
+  form.append("requestId", crypto.randomUUID());
+  form.append("image", await source.blob(), state.originalImage.name);
+  form.append("parameters", JSON.stringify(getDesignParameters(state)));
+  const response = await fetch("/api/kitchen-design/generate", { method: "POST", body: form, signal });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || payload?.code !== 0) throw new Error(payload?.message || "Generation failed. Check History before retrying.");
+  if (!payload.data?.id || !payload.data?.url?.startsWith("/api/kitchen-design/images/")) throw new Error("Invalid saved image response.");
+  return [payload.data as { id: string; url: string }];
 }

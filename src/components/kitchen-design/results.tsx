@@ -19,6 +19,22 @@ export function KitchenDesignResults({ state, update, busy, cancel, onError }: R
   const [activeIndex, setActiveIndex] = useState(0);
   const [compare, setCompare] = useState(true);
   const [downloading, setDownloading] = useState(false);
+  const [historyError, setHistoryError] = useState("");
+
+  useEffect(() => {
+    if (busy) return;
+    const abort = new AbortController();
+    fetch("/api/kitchen-design/history", { signal: abort.signal, cache: "no-store" })
+      .then(async response => {
+        const payload = await response.json();
+        if (abort.signal.aborted) return;
+        if (!response.ok || payload.code !== 0) throw new Error(payload.message || "Could not load saved designs.");
+        update({ generationHistory: payload.data });
+        setHistoryError("");
+      })
+      .catch(error => { if (!abort.signal.aborted) setHistoryError(error instanceof Error ? error.message : "Could not load saved designs."); });
+    return () => abort.abort();
+  }, [tab, busy, update]);
 
   useEffect(() => {
     setActiveIndex(0);
@@ -47,7 +63,7 @@ export function KitchenDesignResults({ state, update, busy, cancel, onError }: R
   }
 
   function restoreHistory(run: KitchenDesignState["generationHistory"][number]) {
-    update({ generationResults: run.results, favoriteId: null });
+    update({ ...run.parameters, originalImage: run.originalImage || null, generationResults: run.results, favoriteId: null });
     setActiveIndex(0);
     setTab("preview");
   }
@@ -66,13 +82,13 @@ export function KitchenDesignResults({ state, update, busy, cancel, onError }: R
         <div className="flex-1 rounded-xl border border-dashed border-slate-300 p-5 sm:p-7">
           <div className="mb-6 flex items-center gap-3">
             <span className="rounded-lg bg-slate-100 p-2 text-slate-600"><RotateCcw size={18} /></span>
-            <div><h2 className="font-semibold">Generation history</h2><p className="text-sm text-slate-500">Saved in this browser.</p></div>
+            <div><h2 className="font-semibold">Generation history</h2><p className="text-sm text-slate-500">Saved to your account.</p></div>
           </div>
-          {state.generationHistory.length ? (
+          {historyError ? <p role="alert" className="text-sm text-slate-500">{historyError}</p> : state.generationHistory.length ? (
             <div className="grid gap-4 sm:grid-cols-2">
               {state.generationHistory.map((run) => (
                 <button key={run.id} type="button" onClick={() => restoreHistory(run)} className="overflow-hidden rounded-xl border border-slate-200 text-left transition-colors hover:border-primary">
-                  <div className="grid h-36 grid-cols-2 gap-px bg-slate-200">
+                  <div className={`grid h-36 gap-px bg-slate-200 ${run.results.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
                     {run.results.slice(0, 2).map((result) => <img key={result.id} src={result.url} alt="Previously generated kitchen concept" className="h-full w-full bg-slate-50 object-cover" />)}
                   </div>
                   <span className="block p-4"><span className="block truncate text-sm font-medium">{run.summary}</span><span className="mt-1 block text-xs text-slate-500">{new Date(run.createdAt).toLocaleString()} · {run.results.length} image{run.results.length === 1 ? "" : "s"}</span></span>
@@ -90,7 +106,7 @@ export function KitchenDesignResults({ state, update, busy, cancel, onError }: R
           ) : activeResult ? (
             <>
               <div className="mb-6 text-center"><span className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-4 py-2 text-xs font-semibold text-amber-800"><Sparkles size={14} /> AI-GENERATED RESULT</span><h2 className="mt-4 text-2xl font-semibold tracking-tight sm:text-3xl">Your Kitchen Design</h2><p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-500">Compare your starting photo with the generated design and save the result.</p></div>
-              <div className={`grid flex-1 gap-4 ${compare ? "md:grid-cols-2" : ""}`}>
+              <div className={`grid flex-1 gap-4 ${compare && state.originalImage ? "md:grid-cols-2" : ""}`}>
                 {compare && state.originalImage && <figure className="flex min-h-72 flex-col"><div className="relative flex flex-1 items-center overflow-hidden rounded-xl bg-slate-100"><img src={state.originalImage.url} alt="Original kitchen" className="max-h-[520px] w-full object-contain" /><span className="absolute bottom-3 left-3 rounded-md bg-slate-950/75 px-3 py-1.5 text-xs font-medium text-white">Before</span></div></figure>}
                 <figure className="flex min-h-72 flex-col"><div className="relative flex flex-1 items-center overflow-hidden rounded-xl bg-slate-100"><img src={activeResult.url} alt={`Generated kitchen concept ${activeIndex + 1}`} className="max-h-[520px] w-full object-contain" /><span className="absolute bottom-3 right-3 rounded-md bg-slate-950/75 px-3 py-1.5 text-xs font-medium text-white">Concept</span></div></figure>
               </div>

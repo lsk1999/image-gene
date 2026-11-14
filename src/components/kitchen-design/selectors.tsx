@@ -8,6 +8,24 @@ import { areas, scopes, styles, type KitchenDesignState } from "./data";
 
 export type UpdateDesign = (patch: Partial<KitchenDesignState>) => void;
 
+
+function ExpandToggle({ expanded, onToggle, count, noun }: {
+  expanded: boolean;
+  onToggle: () => void;
+  count: number;
+  noun: string;
+}) {
+  // Keep text and icon nodes mounted to tolerate browser translation.
+  return (
+    <button type="button" aria-expanded={expanded} onClick={onToggle}
+      className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-slate-200 py-2 text-xs font-medium text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900">
+      <ChevronDown size={14} aria-hidden="true" className={`transition-transform ${expanded ? "rotate-180" : "rotate-0"}`} />
+      <span className={expanded ? "hidden" : "inline"}>Explore all {count} {noun}</span>
+      <span className={expanded ? "inline" : "hidden"}>Show fewer {noun}</span>
+    </button>
+  );
+}
+
 export function Choice({ selected, children, onClick }: { selected: boolean; children: React.ReactNode; onClick: () => void }) {
   return <button type="button" aria-pressed={selected} onClick={onClick} className={`rounded-lg border px-4 py-3 text-left text-sm transition-colors focus-visible:outline-2 focus-visible:outline-primary ${selected ? "border-primary bg-primary/5 text-primary" : "border-slate-200 hover:border-slate-400"}`}>{children}</button>;
 }
@@ -46,24 +64,74 @@ export function StyleSelector({ state, update }: { state: KitchenDesignState; up
     <div className="grid grid-cols-3 gap-2.5">
       {styles.map((style, index) => <div key={style.name} className={!expanded && index >= 6 ? "hidden" : "block"}><ImageChoice title={style.name} image={style.image} imageAlt={style.alt} selected={state.designStyle === style.name} onClick={() => update({ designStyle: style.name })} /></div>)}
     </div>
-    <button type="button" aria-expanded={expanded} onClick={() => setExpanded(value => !value)} className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-slate-200 py-2 text-xs font-medium text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900">
-      <ChevronDown size={14} aria-hidden="true" className={`transition-transform ${expanded ? "rotate-180" : "rotate-0"}`} />
-      <span className={expanded ? "hidden" : "inline"}>Explore all {styles.length} styles</span>
-      <span className={expanded ? "inline" : "hidden"}>Show fewer styles</span>
-    </button>
+    <ExpandToggle expanded={expanded} onToggle={() => setExpanded(value => !value)} count={styles.length} noun="styles" />
   </div>;
 }
 
-export function AreasSelector({ state, update }: { state: KitchenDesignState; update: UpdateDesign }) {
+type SelectorProps = { state: KitchenDesignState; update: UpdateDesign };
+const areaEntries = Object.entries(areas);
+
+function AreaCard({ area, config, state, update }: SelectorProps & {
+  area: string;
+  config: (typeof areas)[string];
+}) {
+  const enabled = state.selectedAreas.includes(area);
+  const preference = state.materialPreferences[area] || { value: "Keep original", custom: "" };
+  const changePreference = (patch: Partial<typeof preference>) => update({
+    materialPreferences: { ...state.materialPreferences, [area]: { ...preference, ...patch } },
+  });
+  const toggleArea = () => update({
+    selectedAreas: enabled
+      ? state.selectedAreas.filter(value => value !== area)
+      : [...state.selectedAreas, area],
+  });
+
+  return (
+    <div className="rounded-xl border border-slate-200 p-4">
+      <label className="flex cursor-pointer items-start justify-between gap-3">
+        <span>
+          <span className="block font-medium">
+            {area}
+            <span className="ml-3 text-xs font-normal text-slate-500">{enabled ? "Customize" : "AI decides"}</span>
+          </span>
+          <span className="mt-1 block text-xs leading-5 text-slate-500">{config.description}</span>
+        </span>
+        <input type="checkbox" className="mt-0.5 size-5 shrink-0 accent-primary" checked={enabled} onChange={toggleArea} />
+      </label>
+      {enabled && (
+        <div className="mt-4 space-y-3">
+          <div className="flex flex-wrap gap-2">
+            {["Keep original", ...config.options, "Custom"].map(option => (
+              <Choice key={option} selected={preference.value === option} onClick={() => changePreference({ value: option })}>
+                {option}
+              </Choice>
+            ))}
+          </div>
+          {preference.value === "Custom" && (
+            <Input aria-label={`Custom ${area}`} placeholder={`Describe your preferred ${area.toLowerCase()}…`}
+              value={preference.custom} onChange={event => changePreference({ custom: event.target.value })} maxLength={1000} />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function AreasSelector({ state, update }: SelectorProps) {
   const [expanded, setExpanded] = useState(false);
-  const areaEntries = Object.entries(areas);
-  return <div className="space-y-3"><p className="mb-3 text-xs leading-5 text-slate-500">Choose materials and finishes only for the areas you want to customize. Unselected areas will be designed by AI to match your chosen style.</p>{areaEntries.map(([area, config], index) => {
-    const enabled = state.selectedAreas.includes(area);
-    const preference = state.materialPreferences[area] || { value: "Keep original", custom: "" };
-    const change = (patch: Partial<typeof preference>) => update({ materialPreferences: { ...state.materialPreferences, [area]: { ...preference, ...patch } } });
-    const hidden = !expanded && index >= 4 && !enabled;
-    return <div key={area} className={hidden ? "hidden" : "block"}><div className="rounded-xl border border-slate-200 p-4"><label className="flex cursor-pointer items-start justify-between gap-3"><span><span className="block font-medium">{area}<span className="ml-3 text-xs font-normal text-slate-500">{enabled ? "Customize" : "AI decides"}</span></span><span className="mt-1 block text-xs leading-5 text-slate-500">{config.description}</span></span><input type="checkbox" className="mt-0.5 size-5 shrink-0 accent-primary" checked={enabled} onChange={() => update({ selectedAreas: enabled ? state.selectedAreas.filter(value => value !== area) : [...state.selectedAreas, area] })} /></label>{enabled && <div className="mt-4 space-y-3"><div className="flex flex-wrap gap-2">{["Keep original", ...config.options, "Custom"].map(option => <Choice key={option} selected={preference.value === option} onClick={() => change({ value: option })}>{option}</Choice>)}</div>{preference.value === "Custom" && <Input aria-label={`Custom ${area}`} placeholder={`Describe your preferred ${area.toLowerCase()}…`} value={preference.custom} onChange={event => change({ custom: event.target.value })} maxLength={1000} />}</div>}</div></div>;
-  })}<button type="button" aria-expanded={expanded} onClick={() => setExpanded(value => !value)} className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-slate-200 py-2 text-xs font-medium text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"><ChevronDown size={14} aria-hidden="true" className={`transition-transform ${expanded ? "rotate-180" : "rotate-0"}`} /><span className={expanded ? "hidden" : "inline"}>Explore all {areaEntries.length} areas</span><span className={expanded ? "inline" : "hidden"}>Show fewer areas</span></button></div>;
+  return (
+    <div className="space-y-3">
+      <p className="mb-3 text-xs leading-5 text-slate-500">
+        Choose materials and finishes only for the areas you want to customize. Unselected areas will be designed by AI to match your chosen style.
+      </p>
+      {areaEntries.map(([area, config], index) => (
+        <div key={area} className={!expanded && index >= 4 && !state.selectedAreas.includes(area) ? "hidden" : "block"}>
+          <AreaCard area={area} config={config} state={state} update={update} />
+        </div>
+      ))}
+      <ExpandToggle expanded={expanded} onToggle={() => setExpanded(value => !value)} count={areaEntries.length} noun="areas" />
+    </div>
+  );
 }
 
 export function AdditionalRequirements({ state, update }: { state: KitchenDesignState; update: UpdateDesign }) {
