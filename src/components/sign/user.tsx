@@ -11,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { Link } from "@/i18n/navigation";
 import { User } from "@/types/user";
 import { signOut } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -23,14 +22,6 @@ export default function SignUser({ user }: { user: User }) {
   const dropdownItems: NavItem[] = [
     {
       title: user.nickname,
-    },
-    {
-      title: t("user.user_center"),
-      url: "/my-orders",
-    },
-    {
-      title: t("user.admin_system"),
-      url: "/admin/users",
     },
     {
       title: t("user.sign_out"),
@@ -51,14 +42,12 @@ export default function SignUser({ user }: { user: User }) {
           <React.Fragment key={index}>
             <DropdownMenuItem
               key={index}
-              className="flex justify-center cursor-pointer"
+              className={`flex justify-center ${item.onClick ? "cursor-pointer" : "cursor-default"}`}
             >
-              {item.url ? (
-                <Link href={item.url as any} target={item.target}>
-                  {item.title}
-                </Link>
-              ) : (
+              {item.onClick ? (
                 <button onClick={item.onClick}>{item.title}</button>
+              ) : (
+                <span>{item.title}</span>
               )}
             </DropdownMenuItem>
             {index !== dropdownItems.length - 1 && <DropdownMenuSeparator />}

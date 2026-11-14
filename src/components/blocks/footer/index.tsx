@@ -50,7 +50,7 @@ export default function Footer({ footer }: { footer: FooterType }) {
                 </ul>
               )}
             </div>
-            <div className="grid grid-cols-3 gap-6 lg:gap-20">
+            <div className="grid grid-cols-2 gap-10 lg:gap-20">
               {footer.nav?.items?.map((item, i) => (
                 <div key={i}>
                   <p className="mb-6 font-bold">{item.title}</p>
@@ -71,15 +71,6 @@ export default function Footer({ footer }: { footer: FooterType }) {
             {footer.copyright && (
               <p>
                 {footer.copyright}
-                {process.env.NEXT_PUBLIC_SHOW_POWERED_BY === "false" ? null : (
-                  <a
-                    href="https://shipany.ai"
-                    target="_blank"
-                    className="px-2 text-primary"
-                  >
-                    build with ShipAny
-                  </a>
-                )}
               </p>
             )}
 
