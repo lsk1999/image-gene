@@ -93,7 +93,8 @@ export function RefineDialog({ open, onOpenChange, result, onSaved, onBusyChange
             {pending && (
               <div role="status" className="absolute inset-0 flex items-center justify-center bg-slate-950/35">
                 <span className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm text-slate-900">
-                  <Loader2 size={16} className="animate-spin" /> Applying your changes…
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Applying your changes…</span>
                 </span>
               </div>
             )}
@@ -120,8 +121,9 @@ export function RefineDialog({ open, onOpenChange, result, onSaved, onBusyChange
             </div>
             <div className="shrink-0 border-t p-4">
               <Button className="w-full" type="submit" disabled={pending || !instruction.trim()}>
-                {pending ? <Loader2 className="animate-spin" /> : <Sparkles />}
-                {pending ? "Applying changes…" : "Apply changes"}
+                <Loader2 aria-hidden="true" className={pending ? "animate-spin" : "hidden"} />
+                <Sparkles aria-hidden="true" className={pending ? "hidden" : undefined} />
+                <span>{pending ? "Applying changes…" : "Apply changes"}</span>
               </Button>
             </div>
           </form>

@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Check, ChevronDown } from "lucide-react";
+import { Armchair, Check, ChevronDown, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { areas, scopes, styles, type KitchenDesignState } from "./data";
+import { areas, styles, type KitchenDesignState } from "./data";
 
 export type UpdateDesign = (patch: Partial<KitchenDesignState>) => void;
 
@@ -38,19 +38,20 @@ export function ImageChoice({ title, description, image, imageAlt, selected, onC
   </button>;
 }
 
-export function ScopeSelector({ state, update }: { state: KitchenDesignState; update: UpdateDesign }) {
-  const selectedScope = scopes.find(scope => scope.name === state.designScope);
-  return <div className="space-y-3">
-    <div className="grid grid-cols-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-1">
-      {scopes.map(scope => {
-        const selected = state.designScope === scope.name;
-        return <button key={scope.name} type="button" aria-pressed={selected} onClick={() => update({ designScope: scope.name })} className={`flex min-h-16 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-center text-[11px] font-medium leading-4 transition-colors focus-visible:outline-2 focus-visible:outline-primary sm:text-xs ${selected ? "bg-white text-primary shadow-sm ring-1 ring-slate-200" : "text-slate-600 hover:bg-white/70 hover:text-slate-900"}`}>{selected && <Check size={13} className="shrink-0" />}<span>{scope.name}</span></button>;
-      })}
+export function FurniturePreservation({ state, update }: SelectorProps) {
+  const enabled = state.keepExistingFurniture;
+  const optionClass = (selected: boolean) =>
+    `flex items-center justify-center gap-2 rounded-xl border-2 px-3 py-3.5 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${selected ? "border-primary bg-primary text-white shadow-sm" : "border-slate-200 bg-white text-slate-700 hover:border-slate-400"}`;
+  return (
+    <div className="grid grid-cols-2 gap-2.5">
+      <button type="button" aria-pressed={enabled} onClick={() => update({ keepExistingFurniture: true })} className={optionClass(enabled)}>
+        <Armchair size={17} aria-hidden="true" /> <span>Keep existing</span>
+      </button>
+      <button type="button" aria-pressed={!enabled} onClick={() => update({ keepExistingFurniture: false })} className={optionClass(!enabled)}>
+        <Sparkles size={17} aria-hidden="true" /> <span>Redesign everything</span>
+      </button>
     </div>
-    <div className={`rounded-lg border px-3.5 py-3 text-xs leading-5 ${selectedScope ? "border-primary/20 bg-primary/[0.03] text-slate-600" : "border-slate-200 bg-slate-50 text-slate-500"}`}>
-      {selectedScope ? selectedScope.description : "Choose how much of your existing kitchen the new concept may change."}
-    </div>
-  </div>;
+  );
 }
 
 export function StyleSelector({ state, update }: { state: KitchenDesignState; update: UpdateDesign }) {
@@ -77,9 +78,13 @@ function AreaCard({ area, config, state, update }: SelectorProps & {
 }) {
   const enabled = state.selectedAreas.includes(area);
   const preference = state.materialPreferences[area] || { value: "Keep original", custom: "" };
-  const status = enabled
-    ? preference.value === "Keep original" ? "Keep original" : "Customize"
-    : state.designScope === "Selected Areas" ? "No area setting" : "AI decides";
+  const keepOriginal = preference.value === "Keep original";
+  const status = enabled && !keepOriginal
+    ? "Customize"
+    : state.keepExistingFurniture ? (enabled ? "Keep original" : "Use existing") : "AI decides";
+  const options = state.keepExistingFurniture
+    ? ["Keep original", ...config.options, "Custom"]
+    : [...config.options, "Custom"];
   const changePreference = (patch: Partial<typeof preference>) => update({
     materialPreferences: { ...state.materialPreferences, [area]: { ...preference, ...patch } },
   });
@@ -87,6 +92,9 @@ function AreaCard({ area, config, state, update }: SelectorProps & {
     selectedAreas: enabled
       ? state.selectedAreas.filter(value => value !== area)
       : [...state.selectedAreas, area],
+    ...(!enabled && !state.materialPreferences[area] ? {
+      materialPreferences: { ...state.materialPreferences, [area]: preference },
+    } : {}),
   });
 
   return (
@@ -94,7 +102,7 @@ function AreaCard({ area, config, state, update }: SelectorProps & {
       <label className="flex cursor-pointer items-start justify-between gap-3">
         <span>
           <span className="block font-medium">
-            {area}
+            <span>{area}</span>
             <span className="ml-3 text-xs font-normal text-slate-500">{status}</span>
           </span>
           <span className="mt-1 block text-xs leading-5 text-slate-500">{config.description}</span>
@@ -104,7 +112,7 @@ function AreaCard({ area, config, state, update }: SelectorProps & {
       {enabled && (
         <div className="mt-4 space-y-3">
           <div className="flex flex-wrap gap-2">
-            {["Keep original", ...config.options, "Custom"].map(option => (
+            {options.map(option => (
               <Choice key={option} selected={preference.value === option} onClick={() => changePreference({ value: option })}>
                 {option}
               </Choice>
@@ -125,9 +133,9 @@ export function AreasSelector({ state, update }: SelectorProps) {
   return (
     <div className="space-y-3">
       <p className="mb-3 text-xs leading-5 text-slate-500">
-        {state.designScope === "Selected Areas"
-          ? "Choose a change here or describe it in Custom Preferences. Anything you don’t ask to change stays as is. Use Keep original to preserve a specific area."
-          : "Choose materials and finishes only for the areas you want to customize. Unselected areas will be designed by AI to match your chosen style."}
+        {state.keepExistingFurniture
+          ? "Existing items stay unless you specify a change below."
+          : "AI designs all new kitchen components. Choose materials or styles below to guide it."}
       </p>
       {areaEntries.map(([area, config], index) => (
         <div key={area} className={!expanded && index >= 4 && !state.selectedAreas.includes(area) ? "hidden" : "block"}>
@@ -140,13 +148,7 @@ export function AreasSelector({ state, update }: SelectorProps) {
 }
 
 export function AdditionalRequirements({ state, update }: { state: KitchenDesignState; update: UpdateDesign }) {
-  const selectedAreas = state.designScope === "Selected Areas";
-  const completeDesign = state.designScope === "Complete Design";
-  const suggestions = selectedAreas
-    ? ["Replace the window blinds with a linen shade.", "Paint the exposed wall warm white."]
-    : completeDesign
-      ? ["Add more closed storage.", "Create a more open feeling."]
-      : ["Keep the existing layout.", "Make the room brighter and warmer.", "Add more closed storage.", "Create a more open feeling."];
+  const suggestions = ["Keep the existing layout.", "Make the room brighter and warmer.", "Add more closed storage.", "Create a more open feeling."];
   return (
     <div>
       <Textarea
@@ -154,7 +156,7 @@ export function AdditionalRequirements({ state, update }: { state: KitchenDesign
         aria-label="Additional requirements"
         rows={6}
         maxLength={3000}
-        placeholder={selectedAreas ? "Describe what to change, e.g. replace the window blinds with a linen shade." : "Add any other requirements…"}
+        placeholder="Describe any other changes you’d like…"
         value={state.customPreferences}
         onChange={event => update({ customPreferences: event.target.value })}
       />

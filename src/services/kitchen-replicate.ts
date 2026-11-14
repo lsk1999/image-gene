@@ -8,6 +8,36 @@ const predictionSchema = z.object({
 });
 const API = "https://api.replicate.com/v1";
 const OUTPUT_LIMIT = 30 * 1024 * 1024;
+const DEFAULT_MODEL = "google/nano-banana-2.1";
+const KONTEXT_MODELS = [
+  "black-forest-labs/flux-kontext-pro",
+  "black-forest-labs/flux-kontext-max",
+];
+
+function predictionInput(model: string, prompt: string, sourceUrl: string, promptUpsampling?: boolean) {
+  const common = {
+    prompt,
+    aspect_ratio: "match_input_image",
+    output_format: "png",
+  };
+
+  if (model === DEFAULT_MODEL) {
+    return {
+      ...common,
+      image_input: [sourceUrl],
+      resolution: "1K",
+      google_search: false,
+      image_search: false,
+    };
+  }
+
+  return {
+    ...common,
+    input_image: sourceUrl,
+    safety_tolerance: 2,
+    prompt_upsampling: promptUpsampling,
+  };
+}
 
 function parsePrediction(value: unknown) {
   const parsed = predictionSchema.safeParse(value);
@@ -18,9 +48,8 @@ function parsePrediction(value: unknown) {
 export function kitchenReplicate() {
   const token = process.env.REPLICATE_API_TOKEN;
   if (!token) throw new Error("Replicate API token is not configured.");
-  const model = process.env.KITCHEN_REPLICATE_MODEL || "black-forest-labs/flux-kontext-pro";
-  // These models share the input schema. Other models require their own adapter.
-  if (!["black-forest-labs/flux-kontext-pro", "black-forest-labs/flux-kontext-max"].includes(model)) {
+  const model = process.env.KITCHEN_REPLICATE_MODEL?.trim() || DEFAULT_MODEL;
+  if (model !== DEFAULT_MODEL && !KONTEXT_MODELS.includes(model)) {
     throw new Error("Unsupported kitchen Replicate model.");
   }
   const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
@@ -43,14 +72,7 @@ export function kitchenReplicate() {
         const created = await fetch(`${API}/models/${model}/predictions`, {
           method: "POST", headers: { ...headers, Prefer: "wait=60", "Cancel-After": `${timeoutSeconds}s` }, signal,
           body: JSON.stringify({
-            input: {
-              prompt,
-              input_image: sourceUrl,
-              aspect_ratio: "match_input_image",
-              output_format: "png",
-              safety_tolerance: 2,
-              prompt_upsampling: promptUpsampling,
-            },
+            input: predictionInput(model, prompt, sourceUrl, promptUpsampling),
           }),
         });
         if (!created.ok) throw new Error(`Replicate creation failed (${created.status}).`);

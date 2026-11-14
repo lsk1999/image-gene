@@ -1,20 +1,3 @@
-export const scopes = [
-  {
-    name: "Visual Refresh",
-    description:
-      "Update colors, finishes, hardware, and styling while keeping the existing layout and main kitchen elements.",
-  },
-  {
-    name: "Selected Areas",
-    description:
-      "Choose or describe what to change. Keep the existing layout and everything else as is.",
-  },
-  {
-    name: "Complete Design",
-    description:
-      "Plan a new kitchen layout for the same room. Keep the walls, doors, and windows, and rethink the cabinetry, appliances, and island where space allows.",
-  },
-];
 export const styles = [
   { name: "Modern", description: "Rooted in 20th-century modernism: simple geometric forms, little applied ornament, flat surfaces, and functional layouts.", image: "/imgs/kitchen-styles/modern.png", alt: "Bright modern kitchen with streamlined cabinetry, neutral finishes, and abundant natural light" },
   { name: "Contemporary", description: "A present-day style rather than a fixed historical period, typically using clean lines, open space, mixed materials, and current finishes.", image: "/imgs/kitchen-styles/contemporary.png", alt: "Contemporary kitchen with sculptural lighting, marble surfaces, and warm refined finishes" },
@@ -71,7 +54,7 @@ export const areas: Record<string, { description: string; options: string[] }> =
 };
 export interface KitchenDesignState {
   originalImage: { url: string; name: string } | null;
-  designScope: string;
+  keepExistingFurniture: boolean;
   designStyle: string;
   selectedAreas: string[];
   materialPreferences: Record<string, { value: string; custom: string }>;
@@ -84,23 +67,29 @@ export interface KitchenDesignState {
     results: { id: string; url: string }[];
     summary: string;
     originalImage?: { url: string; name: string };
-    parameters?: Pick<KitchenDesignState, "designScope" | "designStyle" | "selectedAreas" | "materialPreferences" | "customPreferences">;
+    parameters?: Pick<KitchenDesignState, "keepExistingFurniture" | "designStyle" | "selectedAreas" | "materialPreferences" | "customPreferences">;
   }[];
 }
-
-export const selectedAreasRequired = "Choose a change in Areas & Materials or describe what to change in Custom Preferences.";
 
 export function hasAreaChange(preference: KitchenDesignState["materialPreferences"][string] | undefined) {
   return Boolean(preference?.value && preference.value !== "Keep original");
 }
 
-export function hasRequestedAreaChange(settings: Pick<KitchenDesignState, "customPreferences" | "selectedAreas" | "materialPreferences">) {
-  return Boolean(settings.customPreferences.trim()) ||
-    settings.selectedAreas.some(area => hasAreaChange(settings.materialPreferences[area]));
+export function furnitureSetting(value: unknown, legacyScope: unknown): boolean {
+  if (typeof value === "boolean") return value;
+  return legacyScope === "Visual Refresh" || legacyScope === "Selected Areas" ||
+    legacyScope === "Cosmetic Refresh" || legacyScope === "Partial Renovation";
+}
+
+export function restoreCustomPreferences(value: unknown, layoutGoal: unknown, legacyScope: unknown): string {
+  const preferences = typeof value === "string" ? value : "";
+  const goal = typeof layoutGoal === "string" ? layoutGoal.trim() : "";
+  if (legacyScope !== "Complete Design" || !goal) return preferences.slice(0, 3000);
+  return [preferences, `Layout goal: ${goal}`].filter(Boolean).join("\n").slice(0, 3000);
 }
 
 export const initialState: KitchenDesignState = {
-  originalImage: null, designScope: "", designStyle: "",
+  originalImage: null, keepExistingFurniture: false, designStyle: "",
   selectedAreas: [], materialPreferences: {},
   customPreferences: "", generationResults: [], favoriteId: null,
   generationHistory: [],

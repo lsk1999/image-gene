@@ -3,11 +3,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, ImageIcon, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { hasRequestedAreaChange, initialState, selectedAreasRequired, type KitchenDesignState } from "./data";
+import { initialState, type KitchenDesignState } from "./data";
 import {
   AreasSelector,
   AdditionalRequirements,
-  ScopeSelector,
+  FurniturePreservation,
   StyleSelector,
 } from "./selectors";
 import { UploadKitchenPhoto } from "./upload";
@@ -41,9 +41,9 @@ export default function KitchenDesignPage() {
   const [refining, setRefining] = useState(false);
   const [ready, setReady] = useState(false);
   const controller = useRef<AbortController | null>(null);
-  const { designScope, designStyle, selectedAreas, materialPreferences, customPreferences } = state;
-  const draft = useMemo(() => ({ designScope, designStyle, selectedAreas, materialPreferences, customPreferences }),
-    [designScope, designStyle, selectedAreas, materialPreferences, customPreferences]);
+  const { keepExistingFurniture, designStyle, selectedAreas, materialPreferences, customPreferences } = state;
+  const draft = useMemo(() => ({ keepExistingFurniture, designStyle, selectedAreas, materialPreferences, customPreferences }),
+    [keepExistingFurniture, designStyle, selectedAreas, materialPreferences, customPreferences]);
 
   useEffect(() => {
     setState(previous => ({ ...previous, ...loadDraft() }));
@@ -82,9 +82,6 @@ export default function KitchenDesignPage() {
     if (!state.originalImage) {
       return "Upload a kitchen photo before generating.";
     }
-    if (!state.designScope) {
-      return "Choose a design scope before generating.";
-    }
     if (!state.designStyle) {
       return "Choose a design style before generating.";
     }
@@ -95,9 +92,6 @@ export default function KitchenDesignPage() {
     );
     if (missingCustomArea) {
       return `Describe your custom preference for ${missingCustomArea}.`;
-    }
-    if (state.designScope === "Selected Areas" && !hasRequestedAreaChange(state)) {
-      return selectedAreasRequired;
     }
     return "";
   }
@@ -119,7 +113,7 @@ export default function KitchenDesignPage() {
       const results = await generateKitchenDesign(state, abort.signal);
       const generatedAt = new Date().toISOString();
       const style = state.designStyle;
-      const summary = `${style} · ${state.designScope}`;
+      const summary = style;
       const parameters = getDesignParameters(state);
 
       setState((previous) => ({
@@ -160,7 +154,7 @@ export default function KitchenDesignPage() {
             <div className="shrink-0 border-b border-slate-200 p-4">
               <div className="flex min-h-14 items-center justify-between rounded-lg border border-slate-200 px-4 py-3">
                 <span className="flex items-center gap-2.5 text-base font-medium">
-                  <ImageIcon size={18} className="text-primary" /> Kitchen Design
+                  <ImageIcon size={18} className="text-primary" /> <span>Kitchen Design</span>
                 </span>
                 <ChevronDown size={18} className="text-slate-400" />
               </div>
@@ -184,9 +178,9 @@ export default function KitchenDesignPage() {
               </ConfigSection>
 
               <ConfigSection
-                title="Design Scope"
+                title="Furniture"
               >
-                <ScopeSelector state={state} update={update} />
+                <FurniturePreservation state={state} update={update} />
               </ConfigSection>
 
               <ConfigSection
@@ -215,7 +209,7 @@ export default function KitchenDesignPage() {
                   className="h-14 w-full text-base"
                   onClick={() => controller.current?.abort()}
                 >
-                  <Loader2 className="animate-spin" /> Cancel generation
+                  <Loader2 className="animate-spin" /> <span>Cancel generation</span>
                 </Button>
               ) : (
                 <Button
@@ -224,7 +218,7 @@ export default function KitchenDesignPage() {
                   disabled={refining}
                   onClick={() => void generate()}
                 >
-                  <Sparkles /> Generate Design
+                  <Sparkles /> <span>Generate Design</span>
                 </Button>
               )}
             </div>

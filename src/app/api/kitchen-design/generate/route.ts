@@ -6,7 +6,6 @@ import { getUserUuid } from "@/services/user";
 import { kitchenStorage } from "@/services/kitchen-supabase-storage";
 import { kitchenReplicate } from "@/services/kitchen-replicate";
 import { imageMime, kitchenParameters, kitchenPrompt } from "@/services/kitchen-design";
-import { hasRequestedAreaChange, selectedAreasRequired } from "@/components/kitchen-design/data";
 
 export const maxDuration = 300;
 const fail = (message: string, status: number) => Response.json({ code: -1, message }, { status });
@@ -29,7 +28,7 @@ function savedResult(id: string, parameters: unknown, isRefinement: boolean) {
       createdAt: new Date().toISOString(),
       originalImage: { name: "Kitchen photo", url: `/api/kitchen-design/images/${id}?kind=source` },
       parameters: settings.success ? settings.data : undefined,
-      summary: settings.success ? `${settings.data.designStyle} · ${settings.data.designScope}` : "Kitchen design",
+      summary: settings.success ? settings.data.designStyle : "Kitchen design",
     },
   });
 }
@@ -71,9 +70,6 @@ export async function POST(request: Request) {
       const form = await request.formData();
       runId = z.string().uuid().parse(form.get("requestId"));
       const settings = kitchenParameters.parse(JSON.parse(String(form.get("parameters"))));
-      if (settings.designScope === "Selected Areas" && !hasRequestedAreaChange(settings)) {
-        return fail(selectedAreasRequired, 400);
-      }
       const photo = form.get("image");
       if (!photo || typeof photo === "string" || !photo.size || photo.size > 10 * 1024 * 1024) return fail("Upload a JPG, PNG or WEBP photo up to 10 MB.", 400);
       const bytes = new Uint8Array(await photo.arrayBuffer());

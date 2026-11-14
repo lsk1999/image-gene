@@ -81,6 +81,7 @@ export function KitchenDesignResults({
 
   function restoreHistory(run: KitchenDesignState["generationHistory"][number]) {
     update({
+      keepExistingFurniture: false,
       ...(run.parameters || {}),
       originalImage: run.originalImage || null,
       generationResults: run.results,
@@ -144,7 +145,7 @@ export function KitchenDesignResults({
                       setEditorOpen(true);
                     }}
                   >
-                    <Pencil size={15} /> Edit Design
+                    <Pencil size={15} /> <span>Edit Design</span>
                   </Button>
                   <Button
                     variant="ghost"
@@ -242,7 +243,7 @@ export function KitchenDesignResults({
           </div>
         ) : (
           <div className="flex h-24 items-center justify-center gap-3 rounded-lg bg-slate-50 text-sm text-slate-400">
-            <ImageIcon size={20} /> Generated results will appear here.
+            <ImageIcon size={20} /> <span>Generated results will appear here.</span>
           </div>
         )}
       </div>

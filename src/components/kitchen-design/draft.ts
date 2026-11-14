@@ -1,12 +1,7 @@
-import { areas, scopes, styles, type KitchenDesignState } from "./data";
+import { areas, furnitureSetting, restoreCustomPreferences, styles, type KitchenDesignState } from "./data";
 
 const key = "shipany-kitchen-design-draft";
 const legacyKey = "shipany-kitchen-design-v2";
-const scopeMigrations: Record<string, string> = {
-  "Cosmetic Refresh": "Visual Refresh",
-  "Partial Renovation": "Selected Areas",
-  "Full Renovation": "Complete Design",
-};
 
 const materialPreferenceMigrations: Record<string, Record<string, string>> = {
   Cabinets: { White: "White Painted MDF", Walnut: "Walnut Veneer", Black: "Matte Black", "Navy Blue": "Navy Painted", "Sage Green": "Sage Green Painted" },
@@ -18,11 +13,11 @@ const materialPreferenceMigrations: Record<string, Record<string, string>> = {
   "Sink & Faucet": { "Undermount Sink": "Stainless Steel Undermount", "Farmhouse Sink": "Fireclay Apron-front", "Stainless Steel": "Stainless Steel Undermount", "Brushed Brass": "Brushed Brass Faucet", "Matte Black": "Matte Black Faucet" },
   Appliances: { Integrated: "Panel-ready Integrated", White: "Matte White" },
 };
-export type DesignParameters = Pick<KitchenDesignState, "designScope" | "designStyle" | "selectedAreas" | "materialPreferences" | "customPreferences">;
+export type DesignParameters = NonNullable<KitchenDesignState["generationHistory"][number]["parameters"]>;
 
 export function getDesignParameters(state: DesignParameters): DesignParameters {
   return {
-    designScope: state.designScope,
+    keepExistingFurniture: state.keepExistingFurniture,
     designStyle: state.designStyle,
     selectedAreas: state.selectedAreas,
     materialPreferences: state.materialPreferences,
@@ -48,14 +43,13 @@ function normalizeDraft(value: unknown): Partial<DesignParameters> {
       materialPreferences[area] = { value, custom: typeof candidate.custom === "string" ? candidate.custom.slice(0, 1000) : "" };
     }
   }
-  const rawScope = typeof source.designScope === "string" ? source.designScope : typeof source.renovationScope === "string" ? source.renovationScope : "";
-  const designScope = scopeMigrations[rawScope] || rawScope;
+  const legacyScope = source.designScope ?? source.renovationScope;
   return {
-    designScope: scopes.some(scope => scope.name === designScope) ? designScope : "",
+    keepExistingFurniture: furnitureSetting(source.keepExistingFurniture, legacyScope),
     designStyle: styles.some(style => style.name === source.designStyle) ? source.designStyle as string : "",
     selectedAreas,
     materialPreferences,
-    customPreferences: typeof source.customPreferences === "string" ? source.customPreferences.slice(0, 3000) : "",
+    customPreferences: restoreCustomPreferences(source.customPreferences, source.layoutGoal, legacyScope),
   };
 }
 
