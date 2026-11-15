@@ -9,7 +9,7 @@ export default function Feature1({ section }: { section: SectionType }) {
   const items = section.items || [];
 
   return (
-    <section id={section.name} className="bg-white py-20 sm:py-24">
+    <section id={section.name} className="scroll-mt-24 bg-white py-20 sm:py-24">
       <div className="container">
         <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
           {section.image && (

@@ -1,12 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { Menu, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Header as HeaderType } from "@/types/blocks/header";
 import CreditsDisplay from "@/components/credits";
 import Icon from "@/components/icon";
-import { Link } from "@/i18n/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
 import LocaleToggle from "@/components/locale/toggle";
 import SignToggle from "@/components/sign/toggle";
 import ThemeToggle from "@/components/theme/toggle";
@@ -31,7 +32,18 @@ function Brand({ header, compact = false }: { header: HeaderType; compact?: bool
 }
 
 export default function Header({ header }: { header: HeaderType }) {
+  const pathname = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false);
+
   if (header.disabled) return null;
+
+  const isActive = (url?: string) => {
+    // Hash links point at a section of another page, so they never mark the current page.
+    if (!url || url.includes("#")) return false;
+    const path = url.replace(/\/$/, "") || "/";
+    const current = pathname.replace(/\/$/, "") || "/";
+    return path === current;
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 shadow-[0_1px_0_rgba(15,23,42,0.02)] backdrop-blur-xl">
@@ -39,18 +51,31 @@ export default function Header({ header }: { header: HeaderType }) {
         <nav className="hidden min-h-24 items-center justify-between gap-8 lg:flex" aria-label="Main navigation">
           <div className="flex min-w-0 items-center gap-10 xl:gap-14">
             <Brand header={header} />
-            <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50/80 p-1.5">
-              {header.nav?.items?.map((item) => (
-                <Link
-                  key={item.title}
-                  href={item.url as any}
-                  target={item.target}
-                  className="flex h-11 items-center gap-2 rounded-full px-4 text-sm font-medium text-slate-600 transition-colors hover:bg-white hover:text-slate-950 hover:shadow-sm"
-                >
-                  {item.icon && <Icon name={item.icon} className="size-4 text-primary" />}
-                  <span>{item.title}</span>
-                </Link>
-              ))}
+            <div className="flex items-center gap-7 xl:gap-9">
+              {header.nav?.items?.map((item) => {
+                const active = isActive(item.url);
+                return (
+                  <Link
+                    key={item.title}
+                    href={item.url as any}
+                    target={item.target}
+                    aria-current={active ? "page" : undefined}
+                    className={`group relative flex items-center gap-2 py-2.5 text-sm font-medium transition-colors ${active ? "text-slate-950" : "text-slate-500 hover:text-slate-950"}`}
+                  >
+                    {item.icon && (
+                      <Icon
+                        name={item.icon}
+                        className={`size-4 transition-colors ${active ? "text-primary" : "text-slate-400 group-hover:text-primary"}`}
+                      />
+                    )}
+                    <span>{item.title}</span>
+                    <span
+                      aria-hidden="true"
+                      className={`absolute inset-x-0 -bottom-0.5 h-0.5 origin-left rounded-full bg-primary transition-transform duration-300 ${active ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`}
+                    />
+                  </Link>
+                );
+              })}
             </div>
           </div>
 
@@ -74,7 +99,7 @@ export default function Header({ header }: { header: HeaderType }) {
           <Brand header={header} compact />
           <div className="flex shrink-0 items-center gap-2">
             <CreditsDisplay />
-            <Sheet>
+            <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="outline" size="icon" className="size-11 rounded-xl" aria-label="Open navigation">
                   <Menu className="size-5" />
@@ -85,13 +110,18 @@ export default function Header({ header }: { header: HeaderType }) {
                   <SheetTitle asChild><div><Brand header={header} compact /></div></SheetTitle>
                 </SheetHeader>
                 <nav className="mt-6 flex flex-col gap-2" aria-label="Mobile navigation">
-                  {header.nav?.items?.map((item) => (
-                    <Link key={item.title} href={item.url as any} target={item.target}
-                      className="flex min-h-14 items-center gap-3 rounded-xl px-4 font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-950">
-                      {item.icon && <span className="grid size-9 place-items-center rounded-lg bg-primary/10 text-primary"><Icon name={item.icon} className="size-4" /></span>}
-                      {item.title}
-                    </Link>
-                  ))}
+                  {header.nav?.items?.map((item) => {
+                    const active = isActive(item.url);
+                    return (
+                      <Link key={item.title} href={item.url as any} target={item.target}
+                        aria-current={active ? "page" : undefined}
+                        onClick={() => setMenuOpen(false)}
+                        className={`flex min-h-14 items-center gap-3 rounded-xl px-4 font-medium transition-colors ${active ? "bg-primary/5 text-slate-950" : "text-slate-700 hover:bg-slate-100 hover:text-slate-950"}`}>
+                        {item.icon && <span className="grid size-9 place-items-center rounded-lg bg-primary/10 text-primary"><Icon name={item.icon} className="size-4" /></span>}
+                        {item.title}
+                      </Link>
+                    );
+                  })}
                 </nav>
                 <div className="mt-auto space-y-3 border-t pt-6">
                   {header.buttons?.map((item) => (
