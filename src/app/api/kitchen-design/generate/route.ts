@@ -1,11 +1,13 @@
-import { and, desc, eq, gte, lt } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lt } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { kitchenGenerations } from "@/db/schema";
+import { credits, kitchenGenerations } from "@/db/schema";
 import { getUserUuid } from "@/services/user";
 import { kitchenStorage } from "@/services/kitchen-supabase-storage";
 import { kitchenReplicate } from "@/services/kitchen-replicate";
 import { imageMime, kitchenParameters, kitchenPrompt } from "@/services/kitchen-design";
+import { CreditsTransType, lockCredits, spendCredits } from "@/services/credit";
+import { KITCHEN_DESIGN_CREDIT_COST } from "@/components/kitchen-design/data";
 
 export const maxDuration = 300;
 const fail = (message: string, status: number) => Response.json({ code: -1, message }, { status });
@@ -83,26 +85,46 @@ export async function POST(request: Request) {
       upload = { bytes, mime };
       prompt = kitchenPrompt(settings);
     }
-    // Expire abandoned jobs before checking a retry of the same request.
-    await db().update(kitchenGenerations).set({ status: "failed", updated_at: new Date() }).where(and(eq(kitchenGenerations.user_uuid, user), eq(kitchenGenerations.status, "processing"), lt(kitchenGenerations.created_at, new Date(Date.now() - 10 * 60_000))));
-    const [existing] = await db().select().from(kitchenGenerations).where(eq(kitchenGenerations.uuid, runId)).limit(1);
-    if (existing) {
-      if (existing.user_uuid !== user) return fail("Request unavailable.", 404);
-      if (existing.status === "completed") return savedResult(runId, existing.parameters, isRefinement);
-      return existing.status === "processing"
-        ? fail("This design is still generating. Check Previous Results shortly.", 409)
-        : fail(
-          isRefinement ? "The previous edit failed. Select Apply changes to try again." : "This generation failed. Start a new generation.",
-          isRefinement ? 422 : 409,
-        );
-    }
-    const recent = await db().select({ uuid: kitchenGenerations.uuid }).from(kitchenGenerations).where(and(eq(kitchenGenerations.user_uuid, user), gte(kitchenGenerations.created_at, new Date(Date.now() - 3600_000)))).orderBy(desc(kitchenGenerations.created_at)).limit(10);
-    if (recent.length >= 10) return fail("Generation limit reached. Please try again later.", 429);
-    const model = provider.model;
-    const prefix = `kitchen-design/${user}/${runId}`;
-    const [claimed] = await db().insert(kitchenGenerations).values({ uuid: runId, user_uuid: user, status: "processing", source_key: sourceKey, parameters, prompt, model }).onConflictDoNothing().returning();
-    if (!claimed) return fail("A design is already generating. Please wait for it to finish.", 409);
+    const id = runId;
+    const rejection = await db().transaction(async (tx) => {
+      await lockCredits(tx, user);
+      const abandoned = await tx.update(kitchenGenerations).set({ status: "failed", updated_at: new Date() })
+        .where(and(eq(kitchenGenerations.user_uuid, user), eq(kitchenGenerations.status, "processing"), lt(kitchenGenerations.created_at, new Date(Date.now() - 10 * 60_000))))
+        .returning({ id: kitchenGenerations.uuid });
+      if (abandoned.length) {
+        await tx.delete(credits).where(and(
+          eq(credits.user_uuid, user),
+          eq(credits.trans_type, CreditsTransType.KitchenDesign),
+          inArray(credits.trans_no, abandoned.map((job) => `kitchen:${job.id}`)),
+        ));
+      }
+      const [existing] = await tx.select().from(kitchenGenerations).where(eq(kitchenGenerations.uuid, id)).limit(1);
+      if (existing) {
+        if (existing.user_uuid !== user) return fail("Request unavailable.", 404);
+        if (existing.status === "completed") return savedResult(id, existing.parameters, isRefinement);
+        return existing.status === "processing"
+          ? fail("This design is still generating. Check Previous Results shortly.", 409)
+          : fail(
+            isRefinement ? "The previous edit failed. Select Apply changes to try again." : "This generation failed. Start a new generation.",
+            422,
+          );
+      }
+      const recent = await tx.select({ uuid: kitchenGenerations.uuid }).from(kitchenGenerations).where(and(eq(kitchenGenerations.user_uuid, user), gte(kitchenGenerations.created_at, new Date(Date.now() - 3600_000)))).orderBy(desc(kitchenGenerations.created_at)).limit(10);
+      if (recent.length >= 10) return fail("Generation limit reached. Please try again later.", 429);
+      const [claimed] = await tx.insert(kitchenGenerations).values({ uuid: id, user_uuid: user, status: "processing", source_key: sourceKey, parameters, prompt, model: provider.model }).onConflictDoNothing().returning();
+      if (!claimed) return fail("A design is already generating. Please wait for it to finish.", 409);
+      if (!(await spendCredits(tx, user, KITCHEN_DESIGN_CREDIT_COST, CreditsTransType.KitchenDesign, `kitchen:${id}`))) {
+        await tx.delete(kitchenGenerations).where(eq(kitchenGenerations.uuid, id));
+        const [pending] = await tx.select({ id: kitchenGenerations.uuid }).from(kitchenGenerations)
+          .where(and(eq(kitchenGenerations.user_uuid, user), eq(kitchenGenerations.status, "processing"))).limit(1);
+        if (pending) return fail("Your last credit is in use. Wait for the current design to finish.", 409);
+        return fail("You’re out of credits. Choose a plan to continue.", 402);
+      }
+      return null;
+    });
+    if (rejection) return rejection;
     ownsRun = true;
+    const prefix = `kitchen-design/${user}/${id}`;
     if (upload) await storage.upload(sourceKey, upload.bytes, upload.mime);
     const result = await provider.generate(
       prompt,
@@ -120,7 +142,18 @@ export async function POST(request: Request) {
     return savedResult(runId, parameters, isRefinement);
   } catch (error) {
     if (ownsRun && runId) {
-      await db().update(kitchenGenerations).set({ status: "failed", updated_at: new Date() }).where(and(eq(kitchenGenerations.uuid, runId), eq(kitchenGenerations.user_uuid, user), eq(kitchenGenerations.status, "processing"))).catch(() => undefined);
+      const id = runId;
+      await db().transaction(async (tx) => {
+        await lockCredits(tx, user);
+        const [failed] = await tx.update(kitchenGenerations).set({ status: "failed", updated_at: new Date() })
+          .where(and(eq(kitchenGenerations.uuid, id), eq(kitchenGenerations.user_uuid, user), eq(kitchenGenerations.status, "processing")))
+          .returning({ id: kitchenGenerations.uuid });
+        if (failed) await tx.delete(credits).where(and(
+          eq(credits.user_uuid, user),
+          eq(credits.trans_type, CreditsTransType.KitchenDesign),
+          eq(credits.trans_no, `kitchen:${id}`),
+        ));
+      }).catch(() => console.error("Could not release kitchen credit", { runId: id }));
     }
     if (!ownsRun && (error instanceof z.ZodError || error instanceof SyntaxError)) return fail("Invalid design settings.", 400);
     console.error("Kitchen generation failed", { runId, message: error instanceof Error ? error.message : "Unknown error" });

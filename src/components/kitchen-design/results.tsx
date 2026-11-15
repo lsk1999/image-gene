@@ -16,10 +16,11 @@ type ResultsProps = {
   onRefiningChange: (busy: boolean) => void;
   onRefinementSaved: (run: KitchenDesignState["generationHistory"][number], parentId: string) => void;
   onError: (message: string) => void;
+  onAccessRequired: (status: number) => Promise<boolean>;
 };
 
 export function KitchenDesignResults({
-  state, update, busy, refining, readingPhoto, onRefiningChange, onRefinementSaved, onError,
+  state, update, busy, refining, readingPhoto, onRefiningChange, onRefinementSaved, onError, onAccessRequired,
 }: ResultsProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [downloading, setDownloading] = useState(false);
@@ -105,6 +106,7 @@ export function KitchenDesignResults({
           result={editResult}
           onSaved={saveEdit}
           onBusyChange={onRefiningChange}
+          onAccessRequired={onAccessRequired}
           restoreFocus={() => editButton.current?.focus()}
         />
       )}

@@ -3,7 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, ImageIcon, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { initialState, type KitchenDesignState } from "./data";
+import { getSession, signIn } from "next-auth/react";
+import { useRouter } from "@/i18n/navigation";
+import { isAuthEnabled, isGoogleAuthEnabled } from "@/lib/auth";
+import { initialState, KITCHEN_DESIGN_CREDIT_COST, type KitchenDesignState } from "./data";
 import {
   AreasSelector,
   AdditionalRequirements,
@@ -12,8 +15,8 @@ import {
 } from "./selectors";
 import { UploadKitchenPhoto } from "./upload";
 import { KitchenDesignResults } from "./results";
-import { generateKitchenDesign } from "./api";
-import { getDesignParameters, loadDraft, saveDraft } from "./draft";
+import { generateKitchenDesign, KitchenRequestError } from "./api";
+import { getDesignParameters, loadDraft, saveDraft, saveRedirectDraft, takeRedirectDraft } from "./draft";
 
 function ConfigSection({
   title,
@@ -42,14 +45,29 @@ export default function KitchenDesignPage() {
   const [ready, setReady] = useState(false);
   const [readingPhoto, setReadingPhoto] = useState(false);
   const controller = useRef<AbortController | null>(null);
+  const lastGeneration = useRef<{ photo: KitchenDesignState["originalImage"]; settings: string; id: string } | null>(null);
+  const redirectDraft = useRef<ReturnType<typeof takeRedirectDraft> | null>(null);
+  const router = useRouter();
   const { keepExistingFurniture, designStyle, selectedAreas, materialPreferences, customPreferences } = state;
   const draft = useMemo(() => ({ keepExistingFurniture, designStyle, selectedAreas, materialPreferences, customPreferences }),
     [keepExistingFurniture, designStyle, selectedAreas, materialPreferences, customPreferences]);
 
   useEffect(() => {
-    setState(previous => ({ ...previous, ...loadDraft() }));
-    setReady(true);
-    return () => controller.current?.abort();
+    let active = true;
+    redirectDraft.current ??= takeRedirectDraft();
+    void redirectDraft.current.then((restored) => {
+      if (!active) return;
+      setState(previous => ({
+        ...previous,
+        ...loadDraft(),
+        ...(previous.originalImage ? {} : restored),
+      }));
+      setReady(true);
+    });
+    return () => {
+      active = false;
+      controller.current?.abort();
+    };
   }, []);
 
   useEffect(() => {
@@ -100,6 +118,21 @@ export default function KitchenDesignPage() {
 
   const validationMessage = validate();
 
+  async function handleAccess(status: number) {
+    if (status !== 401 && status !== 402) return false;
+    if (status === 401 && (!isAuthEnabled() || !isGoogleAuthEnabled())) {
+      throw new Error("Google sign-in is currently unavailable.");
+    }
+    try {
+      await saveRedirectDraft(state);
+    } catch {
+      throw new Error("Could not keep your photo across pages. Allow site storage and try again.");
+    }
+    if (status === 402) router.push("/pricing");
+    else await signIn("google", { redirectTo: window.location.href });
+    return true;
+  }
+
   async function generate() {
     if (!ready || controller.current || refining) return;
     if (validationMessage) {
@@ -113,11 +146,31 @@ export default function KitchenDesignPage() {
     controller.current = abort;
 
     try {
-      const results = await generateKitchenDesign(state, abort.signal);
+      const session = isAuthEnabled() ? await getSession() : null;
+      if (!session?.user?.uuid) {
+        await handleAccess(401);
+        return;
+      }
+      const parameters = getDesignParameters(state);
+      const settings = JSON.stringify(parameters);
+      const previous = lastGeneration.current;
+      const requestId = previous && previous.photo === state.originalImage && previous.settings === settings
+        ? previous.id
+        : crypto.randomUUID();
+      lastGeneration.current = { photo: state.originalImage, settings, id: requestId };
+      let results: KitchenDesignState["generationResults"];
+      try {
+        results = await generateKitchenDesign(state, abort.signal, requestId);
+      } catch (failure) {
+        if (!(failure instanceof KitchenRequestError) || failure.status !== 422) throw failure;
+        const retryId = crypto.randomUUID();
+        lastGeneration.current = { photo: state.originalImage, settings, id: retryId };
+        results = await generateKitchenDesign(state, abort.signal, retryId);
+      }
+      lastGeneration.current = null;
       const generatedAt = new Date().toISOString();
       const style = state.designStyle;
       const summary = style;
-      const parameters = getDesignParameters(state);
 
       setState((previous) => ({
         ...previous,
@@ -132,10 +185,18 @@ export default function KitchenDesignPage() {
             originalImage: { name: "Kitchen photo", url: `/api/kitchen-design/images/${results[0].id}?kind=source` },
             parameters,
           },
-          ...previous.generationHistory,
+          ...previous.generationHistory.filter((item) => item.id !== results[0].id),
         ].slice(0, 50),
       }));
     } catch (failure) {
+      if (failure instanceof KitchenRequestError && (failure.status === 401 || failure.status === 402) && !abort.signal.aborted) {
+        try {
+          await handleAccess(failure.status);
+        } catch (accessError) {
+          setError(accessError instanceof Error ? accessError.message : "Could not continue. Please try again.");
+        }
+        return;
+      }
       if (!abort.signal.aborted) {
         setError(
           failure instanceof Error
@@ -219,7 +280,7 @@ export default function KitchenDesignPage() {
                 <Loader2 aria-hidden="true" className={busy ? "motion-safe:animate-spin" : "hidden"} />
                 <Sparkles aria-hidden="true" className={busy ? "hidden" : undefined} />
                 <span className={busy ? "inline" : "hidden"}>Generating design…</span>
-                <span className={busy ? "hidden" : "inline"}>Generate Design</span>
+                <span className={busy ? "hidden" : "inline"}>Generate Design · {KITCHEN_DESIGN_CREDIT_COST} credit</span>
               </Button>
               {ready && !busy && !refining && validationMessage && (
                 <p id="kitchen-generate-hint" className="mt-2 text-xs leading-5 text-slate-600">{validationMessage}</p>
@@ -237,6 +298,7 @@ export default function KitchenDesignPage() {
               onRefiningChange={setRefining}
               onRefinementSaved={saveRefinement}
               onError={setError}
+              onAccessRequired={handleAccess}
             />
           </div>
         </div>

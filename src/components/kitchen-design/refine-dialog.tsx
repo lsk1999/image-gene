@@ -5,16 +5,18 @@ import { Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import type { KitchenDesignState } from "./data";
+import { KITCHEN_DESIGN_CREDIT_COST } from "./data";
 
 type Result = KitchenDesignState["generationResults"][number];
 type SavedDesign = KitchenDesignState["generationHistory"][number];
 
-export function RefineDialog({ open, onOpenChange, result, onSaved, onBusyChange, restoreFocus }: {
+export function RefineDialog({ open, onOpenChange, result, onSaved, onBusyChange, onAccessRequired, restoreFocus }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   result: Result;
   onSaved: (design: SavedDesign, parentId: string) => void;
   onBusyChange: (busy: boolean) => void;
+  onAccessRequired: (status: number) => Promise<boolean>;
   restoreFocus: () => void;
 }) {
   const [instruction, setInstruction] = useState("");
@@ -59,6 +61,7 @@ export function RefineDialog({ open, onOpenChange, result, onSaved, onBusyChange
       }
       if (!response.ok || payload?.code !== 0) {
         if (response.status === 422) lastRequest.current = null;
+        if (await onAccessRequired(response.status)) return;
         throw new Error(payload?.message || "Could not confirm the edit. Try again to check the same request.");
       }
 
@@ -133,7 +136,7 @@ export function RefineDialog({ open, onOpenChange, result, onSaved, onBusyChange
               <Button className="w-full" type="submit" disabled={pending || !instruction.trim()}>
                 <Loader2 aria-hidden="true" className={pending ? "animate-spin" : "hidden"} />
                 <Sparkles aria-hidden="true" className={pending ? "hidden" : undefined} />
-                <span>{pending ? "Applying changes…" : "Apply changes"}</span>
+                <span>{pending ? "Applying changes…" : `Apply changes · ${KITCHEN_DESIGN_CREDIT_COST} credit`}</span>
               </Button>
             </div>
           </form>

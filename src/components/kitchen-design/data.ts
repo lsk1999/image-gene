@@ -1,3 +1,5 @@
+export const KITCHEN_DESIGN_CREDIT_COST = 1;
+
 export const styles = [
   { name: "Modern", description: "Rooted in 20th-century modernism: simple geometric forms, little applied ornament, flat surfaces, and functional layouts.", image: "/imgs/kitchen-styles/modern.png", alt: "Bright modern kitchen with streamlined cabinetry, neutral finishes, and abundant natural light" },
   { name: "Contemporary", description: "A present-day style rather than a fixed historical period, typically using clean lines, open space, mixed materials, and current finishes.", image: "/imgs/kitchen-styles/contemporary.png", alt: "Contemporary kitchen with sculptural lighting, marble surfaces, and warm refined finishes" },

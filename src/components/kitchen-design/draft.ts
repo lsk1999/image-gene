@@ -77,3 +77,72 @@ export function saveDraft(state: DesignParameters) {
     // Saving a draft is optional; the active session remains usable.
   }
 }
+
+const redirectDraftKey = "kitchen-design-redirect-draft";
+
+function openRedirectDraft(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(redirectDraftKey, 1);
+    request.onupgradeneeded = () => request.result.createObjectStore("photos");
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+    request.onblocked = () => reject(new Error("Photo storage is blocked."));
+  });
+}
+
+export async function saveRedirectDraft(state: KitchenDesignState) {
+  saveDraft(state);
+  if (!state.originalImage) return;
+  const id = sessionStorage.getItem(redirectDraftKey) || crypto.randomUUID();
+  const database = await openRedirectDraft();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const tx = database.transaction("photos", "readwrite");
+      tx.oncomplete = () => resolve();
+      tx.onabort = () => reject(tx.error);
+      const store = tx.objectStore("photos");
+      const now = Date.now();
+      const expired = store.openCursor();
+      expired.onsuccess = () => {
+        const cursor = expired.result;
+        if (!cursor) return;
+        if (cursor.value.expiresAt <= now) cursor.delete();
+        cursor.continue();
+      };
+      store.put({
+        photo: state.originalImage,
+        parameters: getDesignParameters(state),
+        expiresAt: now + 60 * 60_000,
+      }, id);
+    });
+    sessionStorage.setItem(redirectDraftKey, id);
+  } finally {
+    database.close();
+  }
+}
+
+export async function takeRedirectDraft(): Promise<Partial<KitchenDesignState>> {
+  try {
+    const id = sessionStorage.getItem(redirectDraftKey);
+    if (!id) return {};
+    const database = await openRedirectDraft();
+    try {
+      const saved = await new Promise<{ photo: KitchenDesignState["originalImage"]; parameters: DesignParameters; expiresAt: number } | undefined>((resolve, reject) => {
+        const tx = database.transaction("photos", "readwrite");
+        const store = tx.objectStore("photos");
+        const request = store.get(id);
+        store.delete(id);
+        tx.oncomplete = () => resolve(request.result);
+        tx.onabort = () => reject(tx.error);
+      });
+      sessionStorage.removeItem(redirectDraftKey);
+      return saved && saved.expiresAt > Date.now()
+        ? { ...normalizeDraft(saved.parameters), originalImage: saved.photo }
+        : {};
+    } finally {
+      database.close();
+    }
+  } catch {
+    return {};
+  }
+}

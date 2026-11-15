@@ -36,6 +36,7 @@ export async function updateOrder({
 
     // order already paied
     if (order.status === OrderStatus.Paid) {
+      if (order.user_uuid && order.credits > 0) await updateCreditForOrder(order as unknown as Order);
       return;
     }
 
