@@ -384,10 +384,10 @@ export default function KitchenDesignPage() {
 
         <div className="mx-auto max-w-3xl py-14 text-center sm:py-16">
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            AI厨房设计
+            AI Kitchen Design
           </h1>
           <p className="mt-4 text-sm leading-7 text-slate-500 sm:text-base">
-            用人工智能改造你的厨房。上传照片，自定义你的偏好，打造你梦想中的厨房。
+            Remodel your kitchen with AI. Upload a photo, choose a style and materials, and preview your dream kitchen in seconds.
           </p>
         </div>
       </div>
