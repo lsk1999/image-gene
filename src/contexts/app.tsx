@@ -26,17 +26,22 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     useOneTapLogin();
   }
 
-  const { data: session } = isAuthEnabled() ? useSession() : { data: null };
+  const { data: session, status: authStatus } = isAuthEnabled()
+    ? useSession()
+    : { data: null, status: "unauthenticated" as const };
+  const sessionUser = authStatus === "authenticated" ? session?.user : undefined;
+  const userId = sessionUser?.uuid;
 
   const [showSignModal, setShowSignModal] = useState<boolean>(false);
   const [user, setUser] = useState<User | null>(null);
 
   const [showFeedback, setShowFeedback] = useState<boolean>(false);
 
-  const fetchUserInfo = async function () {
+  const fetchUserInfo = async function (uuid: string, signal: AbortSignal) {
     try {
       const resp = await fetch("/api/get-user-info", {
         method: "POST",
+        signal,
       });
 
       if (!resp.ok) {
@@ -48,15 +53,16 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(message);
       }
 
+      if (signal.aborted || data?.uuid !== uuid) return;
       setUser(data);
 
-      updateInvite(data);
+      void updateInvite(data, signal);
     } catch (e) {
-      console.log("fetch user info failed");
+      if (!signal.aborted) console.log("fetch user info failed");
     }
   };
 
-  const updateInvite = async (user: User) => {
+  const updateInvite = async (user: User, signal: AbortSignal) => {
     try {
       if (user.invited_by) {
         // user already been invited
@@ -88,6 +94,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       };
       const resp = await fetch("/api/update-invite", {
         method: "POST",
+        signal,
         headers: {
           "Content-Type": "application/json",
         },
@@ -101,26 +108,38 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(message);
       }
 
-      setUser(data);
+      if (signal.aborted) return;
+      if (data?.uuid === user.uuid) {
+        setUser((current) =>
+          current?.uuid === user.uuid ? { ...current, ...data } : current
+        );
+      }
       cacheRemove(CacheKey.InviteCode);
     } catch (e) {
-      console.log("update invite failed: ", e);
+      if (!signal.aborted) console.log("update invite failed: ", e);
     }
   };
 
   useEffect(() => {
-    if (session && session.user) {
-      fetchUserInfo();
+    if (!userId) {
+      setUser(null);
+      return;
     }
-  }, [session]);
+
+    const controller = new AbortController();
+    void fetchUserInfo(userId, controller.signal);
+    return () => controller.abort();
+  }, [session, userId]);
 
   return (
     <AppContext.Provider
       value={{
         showSignModal,
         setShowSignModal,
-        user,
+        user: userId && user?.uuid === userId ? user : null,
         setUser,
+        authStatus,
+        sessionUser,
         showFeedback,
         setShowFeedback,
       }}

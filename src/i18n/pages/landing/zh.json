@@ -44,37 +44,38 @@
   },
   "introduce": {
     "name": "how-it-works",
-    "title": "装修前，先看见厨房的更多可能",
-    "description": "从你自己的空间照片开始，在保持房间辨识度的同时，清晰表达真正关心的设计要求。",
-    "image": { "src": "/imgs/kitchen-styles/modern.jpg", "alt": "现代厨房设计" },
+    "title": "AI 厨房设计工具是怎么工作的",
+    "description": "不用从零搭建房间：上传你现在的厨房，选一个方向，只改想改的地方——墙体、门窗和布局都保持原样。",
+    "image": { "src": "/imgs/kitchen-styles/intro-showcase.jpg", "alt": "明亮现代的厨房，大理石中岛与黄铜细节" },
     "items": [
-      { "title": "上传你的厨房", "description": "使用清晰的 JPG、PNG 或 WEBP 厨房照片作为设计起点。", "icon": "RiImageAddLine" },
-      { "title": "选择真实存在的设计风格", "description": "浏览经过整理的厨房风格，找到适合你家和个人偏好的方向。", "icon": "RiPaletteLine" },
-      { "title": "控制重要细节", "description": "指定橱柜、台面、地面、灯光等区域，也可以让 AI 为你统一搭配。", "icon": "RiListSettingsLine" }
+      { "title": "上传现在的厨房原貌", "description": "一张清晰的 JPG、PNG 或 WEBP 照片，站在日常位置拍摄即可。房间结构、墙体和门窗在每张效果图中都会保留。", "icon": "RiImageAddLine" },
+      { "title": "选一个风格作为起点", "description": "现代、过渡、北欧、日式侘寂等风格可选。风格只决定方向，跟随到什么程度由你决定。", "icon": "RiPaletteLine" },
+      { "title": "只改你想改的部分", "description": "保留现有家具或整体替换；橱柜、台面、防溅墙、地面、照明都是可选项——只勾选你在意的，其余交给 AI 统一搭配。", "icon": "RiListSettingsLine" },
+      { "title": "用一句话继续微调，而不是重新生成", "description": "出图后直接描述下一步调整，比如台面更浅、灯光更暖，每个版本都会与原图一起保存。", "icon": "RiChat3Line" }
     ]
   },
   "benefit": {
     "name": "benefits",
-    "label": "围绕你的真实空间设计",
-    "title": "更直观地探索厨房改造方案",
-    "description": "无需学习专业设计软件，也能从房间照片快速得到完整的厨房概念。",
+    "label": "AI 厨房设计",
+    "title": "AI 能帮我设计厨房吗？",
+    "description": "可以。上传一张厨房照片，就能看到你家空间的真实改造效果，再不断调整到满意为止。",
     "items": [
-      { "title": "逼真的设计效果", "description": "用完整的厨房效果图判断材料、色彩和整体氛围是否符合预期。", "icon": "RiImage2Line", "image": { "src": "/imgs/kitchen-styles/transitional.jpg", "alt": "过渡风格厨房" } },
-      { "title": "灵活控制保留与重做", "description": "需要时保留现有厨房家具，也可以让 AI 重新设计家具和固定设施。", "icon": "RiEqualizer2Line", "image": { "src": "/imgs/kitchen-styles/organic-modern.jpg", "alt": "有机现代厨房" } },
-      { "title": "用自然语言继续修改", "description": "打开生成结果，直接描述下一步调整，并把新方案保存到结果集中。", "icon": "RiEdit2Line", "image": { "src": "/imgs/kitchen-styles/modern-farmhouse.jpg", "alt": "现代农舍厨房" } }
+      { "title": "贴合你家真实空间的方案", "description": "墙体、门窗和布局保持原样，每个方案都是你家厨房真正能实现的效果，而不是通用效果图。", "icon": "RiHomeHeartLine", "image": { "src": "/imgs/kitchen-styles/transitional.jpg", "alt": "过渡风格厨房" } },
+      { "title": "保留什么、改什么，由你决定", "description": "想保留的橱柜可以留下，不满意的直接换掉。哪些区域重做、哪些材料保留，都由你指定。", "icon": "RiEqualizer2Line", "image": { "src": "/imgs/kitchen-styles/organic-modern.jpg", "alt": "有机现代厨房" } },
+      { "title": "用一句话继续调整", "description": "想要更暖的灯光或更浅的台面，说一句就行，每个版本都会保存下来方便对比。", "icon": "RiChat3Line", "image": { "src": "/imgs/kitchen-styles/modern-farmhouse.jpg", "alt": "现代农舍厨房" } }
     ]
   },
   "feature": {
-    "name": "features",
-    "title": "从整体方向到具体材料，都可以自己决定",
-    "description": "先确定风格方向，只在需要更多控制的地方补充细节。",
+    "name": "kitchen-styles",
+    "title": "选一种厨房风格，AI 直接套用到你的空间",
+    "description": "风格库覆盖了最常见的厨房设计方向；也可以直接描述你想要的风格，AI 厨房设计工具会把它适配到你家的空间。",
     "items": [
-      { "title": "厨房照片上传", "description": "以你的真实房间作为每次设计的视觉基础。", "icon": "RiUploadCloud2Line" },
-      { "title": "精选厨房风格", "description": "提供现代、过渡、北欧、日式侘寂等多种成熟设计风格。", "icon": "RiLayoutGridLine" },
-      { "title": "家具保留设置", "description": "明确告诉 AI 保留现有厨房家具，或者重新设计全部家具。", "icon": "RiHomeHeartLine" },
-      { "title": "区域与材料控制", "description": "设置橱柜、台面、防溅墙、地面、照明和电器等偏好。", "icon": "RiToolsLine" },
-      { "title": "自定义偏好", "description": "补充收纳目标、颜色方向、布局需求和其他个性化要求。", "icon": "RiFileTextLine" },
-      { "title": "结果保存与继续修改", "description": "查看以前的方案、下载结果，并基于选中的设计继续调整。", "icon": "RiHistoryLine" }
+      { "title": "现代风格", "description": "利落线条、无拉手橱柜、中性色调。", "image": { "src": "/imgs/kitchen-styles/modern.jpg", "alt": "现代风格 AI 厨房设计" } },
+      { "title": "过渡风格", "description": "经典与现代之间，耐看不过时。", "image": { "src": "/imgs/kitchen-styles/transitional.jpg", "alt": "过渡风格 AI 厨房设计" } },
+      { "title": "北欧风格", "description": "浅色木材、白色饰面，明亮通透。", "image": { "src": "/imgs/kitchen-styles/scandinavian.jpg", "alt": "北欧风格 AI 厨房设计" } },
+      { "title": "日式侘寂", "description": "天然材质、低饱和色调，安静克制。", "image": { "src": "/imgs/kitchen-styles/japandi.jpg", "alt": "日式侘寂风格 AI 厨房设计" } },
+      { "title": "现代农舍", "description": "哑光黑五金、木色饰面，温暖有质感。", "image": { "src": "/imgs/kitchen-styles/modern-farmhouse.jpg", "alt": "现代农舍风格 AI 厨房设计" } },
+      { "title": "工业风格", "description": "深色金属、原始质感，硬朗利落。", "image": { "src": "/imgs/kitchen-styles/industrial.jpg", "alt": "工业风格 AI 厨房设计" } }
     ]
   },
   "faq": {
@@ -83,7 +84,8 @@
     "title": "关于 AI 厨房设计",
     "description": "开始创建第一个厨房方案前，你可能想了解这些问题。",
     "items": [
-      { "title": "适合上传什么样的照片？", "description": "建议使用清晰、光线充足，并尽量完整展示厨房空间的照片。避免拼图、重度滤镜和大面积遮挡。" },
+      { "title": "AI 能帮我设计厨房吗？", "description": "可以。上传一张厨房照片并选择风格，AI 会在几秒钟内基于你的真实空间生成逼真的改造方案，之后还可以用自然语言继续修改。" },
+      { "title": "AI 厨房设计工具是免费的吗？", "description": "注册即可用赠送的免费设计积分在线试用。需要生成更多方案时，可以在价格页购买积分包。" },
       { "title": "可以保留现在厨房里的部分内容吗？", "description": "可以。你可以选择保留现有家具，并通过区域设置明确需要变化的部分。" },
       { "title": "区域和材料必须全部选择吗？", "description": "不需要。区域与材料均为可选项，未指定的区域会由 AI 根据所选风格统一设计。" },
       { "title": "生成后还能继续修改吗？", "description": "可以。打开某个结果，描述需要调整的内容，新图片会继续保存在结果集中。" },

@@ -44,37 +44,38 @@
   },
   "introduce": {
     "name": "how-it-works",
-    "title": "See your kitchen ideas before you renovate",
-    "description": "Create a design from your own room photo while keeping the space recognizable and directing the details that matter to you.",
-    "image": { "src": "/imgs/kitchen-styles/modern.jpg", "alt": "Modern kitchen design" },
+    "title": "How the AI kitchen designer works",
+    "description": "You don't rebuild your room from scratch here. Upload the kitchen you already have, pick a direction, and change only what you want — the walls, windows and layout stay in place.",
+    "image": { "src": "/imgs/kitchen-styles/intro-showcase.jpg", "alt": "Bright modern kitchen with a marble island and brass details" },
     "items": [
-      { "title": "Start with your kitchen", "description": "Upload a clear JPG, PNG or WEBP photo of the room you want to redesign.", "icon": "RiImageAddLine" },
-      { "title": "Choose a real design style", "description": "Explore a curated library of kitchen styles and select the direction that fits your home.", "icon": "RiPaletteLine" },
-      { "title": "Control the important details", "description": "Specify cabinetry, counters, flooring, lighting and other areas, or let AI coordinate them for you.", "icon": "RiListSettingsLine" }
+      { "title": "Upload the room as it is", "description": "A clear JPG, PNG or WEBP photo, taken from where you usually stand. The shape of the room, its walls and windows are kept in every image.", "icon": "RiImageAddLine" },
+      { "title": "Pick a style as a starting point", "description": "Choose modern, transitional, Scandinavian, Japandi and more. The style sets the direction — how far to follow it is your call.", "icon": "RiPaletteLine" },
+      { "title": "Change only what you want to change", "description": "Keep your existing furniture or replace it. Cabinets, counters, backsplash, flooring and lighting are optional: select the ones you care about and let AI handle the rest.", "icon": "RiListSettingsLine" },
+      { "title": "Refine with a sentence, not a rebuild", "description": "After the first image, describe the next adjustment in plain words — lighter counters, warmer light — and keep each version beside the original.", "icon": "RiChat3Line" }
     ]
   },
   "benefit": {
     "name": "benefits",
-    "label": "Designed around your room",
-    "title": "A clearer way to explore a kitchen redesign",
-    "description": "Move from a room photo to a complete concept without learning professional design software.",
+    "label": "AI kitchen design",
+    "title": "Can AI help me design my kitchen?",
+    "description": "Yes. Upload one photo of your kitchen and get a realistic redesign of your own space — then adjust it until it feels right.",
     "items": [
-      { "title": "Photorealistic concepts", "description": "Evaluate materials, colors and atmosphere in a polished kitchen visual.", "icon": "RiImage2Line", "image": { "src": "/imgs/kitchen-styles/transitional.jpg", "alt": "Transitional kitchen" } },
-      { "title": "Flexible design control", "description": "Keep existing kitchen furniture when it works, or ask AI to redesign the furniture and fittings.", "icon": "RiEqualizer2Line", "image": { "src": "/imgs/kitchen-styles/organic-modern.jpg", "alt": "Organic modern kitchen" } },
-      { "title": "Refine with plain language", "description": "Open a result and describe the next change in your own words to create another variation.", "icon": "RiEdit2Line", "image": { "src": "/imgs/kitchen-styles/modern-farmhouse.jpg", "alt": "Modern farmhouse kitchen" } }
+      { "title": "A real plan for your actual room", "description": "The walls, windows and layout stay recognizable, so every concept is a look you could achieve in your kitchen — not a generic render.", "icon": "RiHomeHeartLine", "image": { "src": "/imgs/kitchen-styles/transitional.jpg", "alt": "Transitional kitchen" } },
+      { "title": "You decide what stays and what changes", "description": "Keep the cabinets you like and replace the ones you don't. Choose which areas to redesign and which materials to keep.", "icon": "RiEqualizer2Line", "image": { "src": "/imgs/kitchen-styles/organic-modern.jpg", "alt": "Organic modern kitchen" } },
+      { "title": "Refine it in plain language", "description": "Ask for warmer lighting or a lighter counter in one sentence, and compare every version side by side.", "icon": "RiChat3Line", "image": { "src": "/imgs/kitchen-styles/modern-farmhouse.jpg", "alt": "Modern farmhouse kitchen" } }
     ]
   },
   "feature": {
-    "name": "features",
-    "title": "Everything you need to shape the concept",
-    "description": "Make broad style decisions first, then add detail only where you want more control.",
+    "name": "kitchen-styles",
+    "title": "Pick a kitchen style, and AI applies it to your room",
+    "description": "The style library covers the directions people look for most — or describe your own, and the AI kitchen design generator adapts it to your space.",
     "items": [
-      { "title": "Kitchen photo upload", "description": "Use your own room as the visual starting point for every design.", "icon": "RiUploadCloud2Line" },
-      { "title": "Curated kitchen styles", "description": "Choose from modern, transitional, Scandinavian, Japandi and many other established styles.", "icon": "RiLayoutGridLine" },
-      { "title": "Furniture preservation", "description": "Tell AI whether existing kitchen furniture should stay or be redesigned.", "icon": "RiHomeHeartLine" },
-      { "title": "Area and material controls", "description": "Set preferences for cabinets, counters, backsplash, flooring, lighting and appliances.", "icon": "RiToolsLine" },
-      { "title": "Custom preferences", "description": "Add storage goals, color direction, layout needs and other personal requirements.", "icon": "RiFileTextLine" },
-      { "title": "Saved results and refinements", "description": "Return to earlier concepts, download results and create new edits from a selected design.", "icon": "RiHistoryLine" }
+      { "title": "Modern", "description": "Clean lines, handleless cabinets and a neutral palette.", "image": { "src": "/imgs/kitchen-styles/modern.jpg", "alt": "Modern AI kitchen design" } },
+      { "title": "Transitional", "description": "A balance of classic and contemporary that never feels dated.", "image": { "src": "/imgs/kitchen-styles/transitional.jpg", "alt": "Transitional AI kitchen design" } },
+      { "title": "Scandinavian", "description": "Light wood, white surfaces and bright, airy simplicity.", "image": { "src": "/imgs/kitchen-styles/scandinavian.jpg", "alt": "Scandinavian AI kitchen design" } },
+      { "title": "Japandi", "description": "Natural materials, muted tones and calm minimalism.", "image": { "src": "/imgs/kitchen-styles/japandi.jpg", "alt": "Japandi AI kitchen design" } },
+      { "title": "Modern farmhouse", "description": "Matte black accents, shaker cabinets and warm wood tones.", "image": { "src": "/imgs/kitchen-styles/modern-farmhouse.jpg", "alt": "Modern farmhouse AI kitchen design" } },
+      { "title": "Industrial", "description": "Dark metals, raw textures and bold, confident finishes.", "image": { "src": "/imgs/kitchen-styles/industrial.jpg", "alt": "Industrial AI kitchen design" } }
     ]
   },
   "faq": {
@@ -83,7 +84,8 @@
     "title": "Questions about AI Kitchen Design",
     "description": "What to know before creating your first kitchen concept.",
     "items": [
-      { "title": "What kind of photo should I upload?", "description": "Use a clear, well-lit photo that shows as much of the kitchen as possible. Avoid collages, heavy filters and large obstructions." },
+      { "title": "Can AI help me design my kitchen?", "description": "Yes. Upload a photo of your kitchen, choose a style, and AI creates a photorealistic redesign of your own space in seconds. You can then refine it in plain language." },
+      { "title": "Is the AI kitchen design tool free to use?", "description": "You can try the online kitchen designer with the free design credits included when you sign up. If you need more concepts, credit packs are available on the pricing page." },
       { "title": "Can I keep parts of my current kitchen?", "description": "Yes. You can preserve existing furniture and use the area controls to direct specific changes." },
       { "title": "Do I need to configure every area?", "description": "No. Areas and materials are optional. Unspecified areas can be coordinated by AI with the selected style." },
       { "title": "Can I change a generated design?", "description": "Yes. Open a result, describe the change you want, and save the new image alongside your other results." },

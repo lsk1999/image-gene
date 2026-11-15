@@ -6,7 +6,7 @@ import { isAuthEnabled } from "@/lib/auth";
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: Promise<{ callbackUrl: string | undefined }>;
+  searchParams: Promise<{ callbackUrl?: string | string[] }>;
 }) {
   if (!isAuthEnabled()) {
     return redirect("/");
@@ -14,8 +14,18 @@ export default async function SignInPage({
 
   const { callbackUrl } = await searchParams;
   const session = await auth();
-  if (session) {
-    return redirect(callbackUrl || "/");
+  if (session?.user?.uuid) {
+    const baseUrl = process.env.NEXT_PUBLIC_WEB_URL || "https://local.invalid";
+    let destination = "/";
+    try {
+      const url = new URL(typeof callbackUrl === "string" ? callbackUrl : "/", baseUrl);
+      if (url.origin === new URL(baseUrl).origin && !url.pathname.startsWith("//")) {
+        destination = url.pathname + url.search + url.hash;
+      }
+    } catch {
+      // Invalid callback URLs return to the homepage.
+    }
+    return redirect(destination);
   }
 
   return (

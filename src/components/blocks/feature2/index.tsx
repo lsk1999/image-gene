@@ -15,7 +15,7 @@ export default function Feature2({ section }: { section: SectionType }) {
         </div>
         <div className="mt-12 grid gap-5 lg:grid-cols-3">
           {section.items?.map((item) => (
-            <article key={item.title} className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <article key={item.title} className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
               {item.image?.src && (
                 <div className="overflow-hidden">
                   <img src={item.image.src} alt={item.image.alt || item.title}

@@ -16,7 +16,11 @@ import { signOut } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { NavItem } from "@/types/blocks/base";
 
-export default function SignUser({ user }: { user: User }) {
+export default function SignUser({
+  user,
+}: {
+  user: Pick<User, "nickname" | "avatar_url">;
+}) {
   const t = useTranslations();
 
   const dropdownItems: NavItem[] = [
@@ -34,7 +38,7 @@ export default function SignUser({ user }: { user: User }) {
       <DropdownMenuTrigger asChild>
         <Avatar className="cursor-pointer">
           <AvatarImage src={user.avatar_url} alt={user.nickname} />
-          <AvatarFallback>{user.nickname}</AvatarFallback>
+          <AvatarFallback>{user.nickname.trim().slice(0, 1).toUpperCase()}</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="mx-4 bg-background">

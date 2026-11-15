@@ -23,7 +23,11 @@ export default async function RootLayout({
           <meta name="google-adsense-account" content={googleAdsenseCode} />
         )}
 
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="48x48" href="/imgs/seo/favicon-48.png" />
+        <link rel="icon" type="image/png" sizes="96x96" href="/imgs/seo/favicon-96.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/imgs/seo/favicon-192.png" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/imgs/seo/apple-touch-icon.png" />
 
         {locales &&
           locales.map((loc) => (

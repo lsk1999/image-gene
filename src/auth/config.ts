@@ -3,11 +3,6 @@ import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import { NextAuthConfig } from "next-auth";
 import { Provider } from "next-auth/providers/index";
-import { User } from "@/types/user";
-import { getClientIp } from "@/lib/ip";
-import { getIsoTimestr } from "@/lib/time";
-import { getUuid } from "@/lib/hash";
-import { saveUser } from "@/services/user";
 import { handleSignInUser } from "./handler";
 
 let providers: Provider[] = [];
@@ -119,19 +114,9 @@ export const authOptions: NextAuthConfig = {
   providers,
   pages: {
     signIn: "/auth/signin",
+    error: "/auth/error",
   },
   callbacks: {
-    async signIn({ user, account, profile, email, credentials }) {
-      const isAllowedToSignIn = true;
-      if (isAllowedToSignIn) {
-        return true;
-      } else {
-        // Return false to display a default error message
-        return false;
-        // Or you can return a URL to redirect to:
-        // return '/unauthorized'
-      }
-    },
     async redirect({ url, baseUrl }) {
       // Allows relative callback URLs
       if (url.startsWith("/")) return `${baseUrl}${url}`;
@@ -139,37 +124,31 @@ export const authOptions: NextAuthConfig = {
       else if (new URL(url).origin === baseUrl) return url;
       return baseUrl;
     },
-    async session({ session, token, user }) {
-      if (token && token.user && token.user) {
+    async session({ session, token }) {
+      if (token.user) {
         session.user = token.user;
       }
       return session;
     },
     async jwt({ token, user, account }) {
-      // Persist the OAuth access_token and or the user id to the token right after signin
-      try {
-        if (!user || !account) {
-          return token;
-        }
-
-        const userInfo = await handleSignInUser(user, account);
-        if (!userInfo) {
-          throw new Error("save user failed");
-        }
-
-        token.user = {
-          uuid: userInfo.uuid,
-          email: userInfo.email,
-          nickname: userInfo.nickname,
-          avatar_url: userInfo.avatar_url,
-          created_at: userInfo.created_at,
-        };
-
-        return token;
-      } catch (e) {
-        console.error("jwt callback error:", e);
+      if (!user || !account) {
         return token;
       }
+
+      const userInfo = await handleSignInUser(user, account);
+      if (!userInfo?.uuid) {
+        throw new Error("Could not establish an application account");
+      }
+
+      token.user = {
+        uuid: userInfo.uuid,
+        email: userInfo.email,
+        nickname: userInfo.nickname,
+        avatar_url: userInfo.avatar_url,
+        created_at: userInfo.created_at,
+      };
+
+      return token;
     },
   },
 };
