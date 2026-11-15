@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, ImageIcon, Loader2, Sparkles } from "lucide-react";
+import { ChevronDown, Coins, Gift, ImageIcon, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getSession, signIn } from "next-auth/react";
-import { useRouter } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
+import { useAppContext } from "@/contexts/app";
 import { isAuthEnabled, isGoogleAuthEnabled } from "@/lib/auth";
 import { initialState, KITCHEN_DESIGN_CREDIT_COST, type KitchenDesignState } from "./data";
 import {
@@ -48,6 +49,10 @@ export default function KitchenDesignPage() {
   const lastGeneration = useRef<{ photo: KitchenDesignState["originalImage"]; settings: string; id: string } | null>(null);
   const redirectDraft = useRef<ReturnType<typeof takeRedirectDraft> | null>(null);
   const router = useRouter();
+  const { user, setUser, authStatus } = useAppContext();
+  const showCredits = isAuthEnabled() && authStatus === "authenticated";
+  const leftCredits = user?.credits?.left_credits ?? 0;
+  const outOfCredits = showCredits && leftCredits < KITCHEN_DESIGN_CREDIT_COST;
   const { keepExistingFurniture, designStyle, selectedAreas, materialPreferences, customPreferences } = state;
   const draft = useMemo(() => ({ keepExistingFurniture, designStyle, selectedAreas, materialPreferences, customPreferences }),
     [keepExistingFurniture, designStyle, selectedAreas, materialPreferences, customPreferences]);
@@ -133,6 +138,17 @@ export default function KitchenDesignPage() {
     return true;
   }
 
+  async function refreshCredits() {
+    try {
+      const resp = await fetch("/api/get-user-info", { method: "POST" });
+      if (!resp.ok) return;
+      const { code, data } = await resp.json();
+      if (code === 0 && data) setUser(data);
+    } catch {
+      // keep the current balance if the refresh fails
+    }
+  }
+
   async function generate() {
     if (!ready || controller.current || refining) return;
     if (validationMessage) {
@@ -207,6 +223,7 @@ export default function KitchenDesignPage() {
     } finally {
       setBusy(false);
       controller.current = null;
+      void refreshCredits();
     }
   }
 
@@ -268,12 +285,37 @@ export default function KitchenDesignPage() {
 
             <div className="shrink-0 border-t border-slate-200 bg-white p-6 sm:p-7">
               {error && <p role="alert" className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-              <div className="mb-4 text-base font-semibold text-slate-950">Generate & Refine</div>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="text-base font-semibold text-slate-950">Generate</div>
+                {isAuthEnabled() && authStatus !== "loading" && (
+                  <span
+                    className={`flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium leading-none ${
+                      outOfCredits ? "border-red-200 bg-red-50 text-red-600" : "border-slate-200 bg-slate-50 text-slate-600"
+                    }`}
+                  >
+                    <Coins aria-hidden="true" className="size-3.5 text-primary" />
+                    <span className="text-sm font-semibold tabular-nums">{leftCredits}</span>
+                    <span className={outOfCredits ? "text-red-500" : "text-slate-400"}>credits left</span>
+                  </span>
+                )}
+              </div>
+              {isAuthEnabled() && authStatus === "unauthenticated" && (
+                <p className="mb-3 flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs leading-5 text-slate-600">
+                  <Gift aria-hidden="true" className="size-3.5 shrink-0 text-primary" />
+                  <span>Sign in with Google to get your free design credits.</span>
+                </p>
+              )}
+              {outOfCredits && (
+                <p className="mb-3 flex flex-wrap items-center gap-x-1.5 gap-y-1 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs leading-5 text-red-600">
+                  <span>You need {KITCHEN_DESIGN_CREDIT_COST} credit to generate.</span>
+                  <Link href="/pricing" className="font-semibold underline underline-offset-2">Get more credits</Link>
+                </p>
+              )}
               <Button
                 type="button"
                 size="lg"
                 className="h-14 w-full text-base"
-                disabled={!ready || busy || refining || Boolean(validationMessage)}
+                disabled={!ready || busy || refining || outOfCredits || Boolean(validationMessage)}
                 aria-describedby={ready && !busy && !refining && validationMessage ? "kitchen-generate-hint" : undefined}
                 onClick={() => void generate()}
               >
