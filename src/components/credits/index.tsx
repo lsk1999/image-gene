@@ -16,9 +16,9 @@ export default function CreditsDisplay() {
 
   return (
     <Link
-      href={"/my-credits" as any}
-      title="View my credits"
-      className="flex items-center gap-1.5 rounded-full border bg-background px-3 py-1.5 text-sm leading-none transition-colors hover:bg-accent"
+      href={"/pricing" as any}
+      title="View credits and pricing"
+      className="flex h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-sm leading-none shadow-sm transition-colors hover:border-primary/30 hover:bg-primary/5"
     >
       <Coins className="size-4 shrink-0 text-primary" />
       <span className="font-semibold">{leftCredits}</span>

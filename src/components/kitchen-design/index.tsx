@@ -214,7 +214,7 @@ export default function KitchenDesignPage() {
     <div className="min-h-screen bg-slate-50/70 text-slate-900">
       <div className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
         <div className="grid items-start gap-6 lg:grid-cols-[440px_minmax(0,1fr)] xl:grid-cols-[500px_minmax(0,1fr)]">
-          <aside className="overflow-hidden rounded-2xl border border-slate-200 bg-white lg:sticky lg:top-5 lg:flex lg:h-[calc(100dvh-180px)] lg:min-h-[680px] lg:flex-col">
+          <aside className="overflow-hidden rounded-2xl border border-slate-200 bg-white lg:sticky lg:top-28 lg:flex lg:h-[calc(100dvh-180px)] lg:min-h-[680px] lg:flex-col">
             <div className="shrink-0 border-b border-slate-200 p-4">
               <div className="flex min-h-14 items-center justify-between rounded-lg border border-slate-200 px-4 py-3">
                 <span className="flex items-center gap-2.5 text-base font-medium">

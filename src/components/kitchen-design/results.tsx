@@ -97,7 +97,7 @@ export function KitchenDesignResults({
   }
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white lg:sticky lg:top-5 lg:flex lg:h-[calc(100dvh-180px)] lg:min-h-[680px] lg:flex-col">
+    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white lg:sticky lg:top-28 lg:flex lg:h-[calc(100dvh-180px)] lg:min-h-[680px] lg:flex-col">
       {editResult && (
         <RefineDialog
           key={editorSession}

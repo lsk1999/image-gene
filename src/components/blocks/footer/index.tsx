@@ -8,14 +8,14 @@ export default function Footer({ footer }: { footer: FooterType }) {
   }
 
   return (
-    <section id={footer.name} className="py-16">
+    <section id={footer.name} className="border-t border-slate-200 bg-white py-16">
       <div className="max-w-7xl mx-auto px-8">
         <footer>
-          <div className="flex flex-col items-center justify-between gap-10 text-center lg:flex-row lg:text-left">
-            <div className="flex w-full max-w-96 shrink flex-col items-center justify-between gap-6 lg:items-start">
+          <div className="flex flex-col justify-between gap-12 lg:flex-row">
+            <div className="flex w-full max-w-md shrink flex-col gap-6">
               {footer.brand && (
                 <div>
-                  <div className="flex items-center justify-center gap-2 lg:justify-start">
+                  <div className="flex items-center gap-3">
                     {footer.brand.logo && (
                       <img
                         src={footer.brand.logo.src}
@@ -24,13 +24,13 @@ export default function Footer({ footer }: { footer: FooterType }) {
                       />
                     )}
                     {footer.brand.title && (
-                      <p className="text-3xl font-semibold">
+                      <p className="text-2xl font-semibold tracking-[-0.03em] text-slate-950">
                         {footer.brand.title}
                       </p>
                     )}
                   </div>
                   {footer.brand.description && (
-                    <p className="mt-6 text-md text-muted-foreground">
+                    <p className="mt-4 max-w-sm text-sm leading-6 text-slate-600">
                       {footer.brand.description}
                     </p>
                   )}
@@ -50,7 +50,7 @@ export default function Footer({ footer }: { footer: FooterType }) {
                 </ul>
               )}
             </div>
-            <div className="grid grid-cols-2 gap-10 lg:gap-20">
+            <div className="grid grid-cols-2 gap-12 sm:gap-20">
               {footer.nav?.items?.map((item, i) => (
                 <div key={i}>
                   <p className="mb-6 font-bold">{item.title}</p>

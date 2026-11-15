@@ -18,6 +18,14 @@ export interface Hero {
   buttons?: Button[];
   image?: Image;
   tip?: string;
+  benefits?: string[];
+  preview_title?: string;
+  preview_description?: string;
+  preview_status?: string;
+  upload_label?: string;
+  upload_description?: string;
+  control_label?: string;
+  control_description?: string;
   show_happy_users?: boolean;
   show_badge?: boolean;
 }

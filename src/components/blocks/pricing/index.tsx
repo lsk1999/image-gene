@@ -95,22 +95,22 @@ export default function Pricing({ pricing }: { pricing: PricingType }) {
   }, [pricing.items]);
 
   return (
-    <section id={pricing.name} className="py-16">
+    <section id={pricing.name} className="bg-[#f7f8f4] py-20 sm:py-24">
       <div className="container">
-        <div className="mx-auto mb-12 text-center">
-          <h2 className="mb-4 text-4xl font-semibold lg:text-5xl">
+        <div className="mx-auto mb-12 max-w-3xl text-center">
+          <h2 className="text-4xl font-semibold tracking-[-0.04em] text-slate-950 lg:text-6xl">
             {pricing.title}
           </h2>
-          <p className="text-muted-foreground lg:text-lg">
+          <p className="mt-5 text-slate-600 lg:text-lg">
             {pricing.description}
           </p>
         </div>
         <div className="w-full flex flex-col items-center gap-1">
-          {pricing.groups && pricing.groups.length > 0 && (
-            <div className="flex h-12 mb-12 items-center rounded-md bg-muted p-1 text-lg">
+          {pricing.groups && pricing.groups.length > 1 && (
+            <div className="mb-10 flex h-12 items-center rounded-full border border-slate-200 bg-white p-1 text-base shadow-sm">
               <RadioGroup
                 value={group}
-                className={`h-full grid-cols-${pricing.groups.length}`}
+                className="h-full grid-cols-1"
                 onValueChange={(value) => {
                   setGroup(value);
                 }}
@@ -119,7 +119,7 @@ export default function Pricing({ pricing }: { pricing: PricingType }) {
                   return (
                     <div
                       key={i}
-                      className='h-full rounded-md transition-all has-[button[data-state="checked"]]:bg-white'
+                      className='h-full rounded-full transition-all has-[button[data-state="checked"]]:bg-primary/10'
                     >
                       <RadioGroupItem
                         value={item.name || ""}
@@ -146,13 +146,7 @@ export default function Pricing({ pricing }: { pricing: PricingType }) {
               </RadioGroup>
             </div>
           )}
-          <div
-            className={`w-full mt-0 grid gap-6 md:grid-cols-${
-              pricing.items?.filter(
-                (item) => !item.group || item.group === group
-              )?.length
-            }`}
-          >
+          <div className="mt-0 grid w-full max-w-6xl gap-5 md:grid-cols-3">
             {pricing.items?.map((item, index) => {
               if (item.group && item.group !== group) {
                 return null;
@@ -161,17 +155,17 @@ export default function Pricing({ pricing }: { pricing: PricingType }) {
               return (
                 <div
                   key={index}
-                  className={`rounded-lg p-6 ${
+                  className={`relative rounded-2xl bg-white p-7 shadow-sm transition-transform hover:-translate-y-1 ${
                     item.is_featured
-                      ? "border-primary border-2 bg-card text-card-foreground"
-                      : "border-muted border"
+                      ? "border-2 border-primary shadow-lg shadow-primary/10"
+                      : "border border-slate-200"
                   }`}
                 >
                   <div className="flex h-full flex-col justify-between gap-5">
                     <div>
                       <div className="flex items-center gap-2 mb-4">
                         {item.title && (
-                          <h3 className="text-xl font-semibold">
+                          <h3 className="text-lg font-semibold text-slate-950">
                             {item.title}
                           </h3>
                         )}
@@ -179,7 +173,7 @@ export default function Pricing({ pricing }: { pricing: PricingType }) {
                         {item.label && (
                           <Badge
                             variant="outline"
-                            className="border-primary bg-primary px-1.5 text-primary-foreground"
+                            className="rounded-full border-primary bg-primary px-2.5 py-1 text-primary-foreground"
                           >
                             {item.label}
                           </Badge>
@@ -192,7 +186,7 @@ export default function Pricing({ pricing }: { pricing: PricingType }) {
                           </span>
                         )}
                         {item.price && (
-                          <span className="text-5xl font-semibold">
+                          <span className="text-5xl font-semibold tracking-[-0.04em] text-slate-950">
                             {item.price}
                           </span>
                         )}
@@ -203,7 +197,7 @@ export default function Pricing({ pricing }: { pricing: PricingType }) {
                         )}
                       </div>
                       {item.description && (
-                        <p className="text-muted-foreground">
+                        <p className="text-sm leading-6 text-slate-600">
                           {item.description}
                         </p>
                       )}
@@ -213,11 +207,11 @@ export default function Pricing({ pricing }: { pricing: PricingType }) {
                         </p>
                       )}
                       {item.features && (
-                        <ul className="flex flex-col gap-3">
+                        <ul className="flex flex-col gap-3 text-sm text-slate-700">
                           {item.features.map((feature, fi) => {
                             return (
                               <li className="flex gap-2" key={`feature-${fi}`}>
-                                <Check className="mt-1 size-4 shrink-0" />
+                                <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-emerald-50"><Check className="size-3 text-emerald-700" /></span>
                                 {feature}
                               </li>
                             );
@@ -227,10 +221,10 @@ export default function Pricing({ pricing }: { pricing: PricingType }) {
                     </div>
                     <div className="flex flex-col gap-2">
                       {item.cn_amount && item.cn_amount > 0 ? (
-                        <div className="flex items-center gap-x-2 mt-2">
-                          <span className="text-sm">人民币支付 👉</span>
-                          <div
-                            className="inline-block p-2 hover:cursor-pointer hover:bg-base-200 rounded-md"
+                        <button
+                            type="button"
+                            className="mt-2 flex h-12 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition-colors hover:border-primary/30 hover:bg-primary/5"
+                            disabled={isLoading}
                             onClick={() => {
                               if (isLoading) {
                                 return;
@@ -238,17 +232,17 @@ export default function Pricing({ pricing }: { pricing: PricingType }) {
                               handleCheckout(item, true);
                             }}
                           >
+                            <span>{locale === "zh" ? "人民币支付" : "Pay in CNY"}</span>
                             <img
                               src="/imgs/cnpay.png"
-                              alt="cnpay"
-                              className="w-20 h-10 rounded-lg"
+                              alt="Chinese payment methods"
+                              className="h-7 w-auto rounded-md object-contain"
                             />
-                          </div>
-                        </div>
+                        </button>
                       ) : null}
                       {item.button && (
                         <Button
-                          className="w-full flex items-center justify-center gap-2 font-semibold"
+                          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl font-semibold"
                           disabled={isLoading}
                           onClick={() => {
                             if (isLoading) {

@@ -9,11 +9,15 @@
         { "title": "价格", "url": "/pricing", "icon": "RiMoneyDollarCircleLine" }
       ]
     },
+    "buttons": [
+      { "title": "立即设计", "url": "/ai-kitchen-design", "variant": "default", "icon": "RiArrowRightLine" }
+    ],
     "show_sign": true,
     "show_theme": false,
     "show_locale": false
   },
   "hero": {
+    "announcement": { "title": "从你的真实照片开始设计厨房" },
     "title": "用 AI 设计你的梦想厨房",
     "highlight_text": "梦想厨房",
     "description": "上传你的厨房照片，选择喜欢的风格和细节，把想法变成逼真的厨房设计效果图。",
@@ -23,6 +27,14 @@
     ],
     "show_happy_users": false,
     "show_badge": false,
+    "benefits": ["首次登录赠送 1 个设计积分", "生成结果自动保存到账户"],
+    "preview_title": "重新设计你的厨房",
+    "preview_description": "基于真实空间生成逼真的设计方案",
+    "preview_status": "可继续修改",
+    "upload_label": "上传你的厨房",
+    "upload_description": "支持 JPG、PNG 和 WEBP",
+    "control_label": "掌控重要细节",
+    "control_description": "风格、材料及更多偏好",
     "image": {
       "src": "/imgs/kitchen-styles/contemporary.jpg",
       "alt": "当代风格厨房效果图，石材台面与温暖的分层照明"

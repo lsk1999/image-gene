@@ -9,11 +9,15 @@
         { "title": "Pricing", "url": "/pricing", "icon": "RiMoneyDollarCircleLine" }
       ]
     },
+    "buttons": [
+      { "title": "Design now", "url": "/ai-kitchen-design", "variant": "default", "icon": "RiArrowRightLine" }
+    ],
     "show_sign": true,
     "show_theme": false,
     "show_locale": false
   },
   "hero": {
+    "announcement": { "title": "AI kitchen concepts from your own photo" },
     "title": "Design your dream kitchen with AI",
     "highlight_text": "dream kitchen",
     "description": "Upload a photo of your kitchen, choose the look and details you want, and turn your ideas into a photorealistic design.",
@@ -23,6 +27,14 @@
     ],
     "show_happy_users": false,
     "show_badge": false,
+    "benefits": ["1 free design credit", "Results saved to your account"],
+    "preview_title": "Your kitchen, redesigned",
+    "preview_description": "A photorealistic concept based on your room",
+    "preview_status": "Ready to refine",
+    "upload_label": "Upload your room",
+    "upload_description": "JPG, PNG or WEBP",
+    "control_label": "Guide the details",
+    "control_description": "Style, materials and more",
     "image": {
       "src": "/imgs/kitchen-styles/contemporary.jpg",
       "alt": "Contemporary kitchen with marble surfaces and warm layered lighting"

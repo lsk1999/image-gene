@@ -7,28 +7,23 @@ export default function FAQ({ section }: { section: SectionType }) {
   }
 
   return (
-    <section id={section.name} className="py-16">
+    <section id={section.name} className="bg-white py-20 sm:py-24">
       <div className="container">
-        <div className="text-center">
+        <div className="mx-auto max-w-3xl text-center">
           {section.label && (
-            <Badge className="text-xs font-medium">{section.label}</Badge>
+            <Badge variant="outline" className="rounded-full border-primary/20 bg-primary/5 px-3 py-1 text-primary">{section.label}</Badge>
           )}
-          <h2 className="mt-4 text-4xl font-semibold">{section.title}</h2>
-          <p className="mt-6 font-medium text-muted-foreground">
+          <h2 className="mt-5 text-3xl font-semibold tracking-[-0.035em] text-slate-950 lg:text-5xl">{section.title}</h2>
+          <p className="mt-5 text-base leading-7 text-slate-600 lg:text-lg">
             {section.description}
           </p>
         </div>
-        <div className="mx-auto mt-14 grid gap-8 md:grid-cols-2 md:gap-12">
+        <div className="mx-auto mt-12 grid gap-4 md:grid-cols-2">
           {section.items?.map((item, index) => (
-            <div key={index} className="flex gap-4">
-              <span className="flex size-6 shrink-0 items-center justify-center rounded-sm border border-primary font-mono text-xs text-primary">
-                {index + 1}
-              </span>
+            <div key={index} className="rounded-2xl border border-slate-200 bg-slate-50/60 p-6">
               <div>
-                <div className="mb-2 flex items-center justify-between">
-                  <h3 className="font-semibold">{item.title}</h3>
-                </div>
-                <p className="text-md text-muted-foreground">
+                <h3 className="font-semibold text-slate-950">{item.title}</h3>
+                <p className="mt-3 text-sm leading-6 text-slate-600">
                   {item.description}
                 </p>
               </div>

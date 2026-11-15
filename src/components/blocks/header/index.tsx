@@ -1,316 +1,107 @@
 "use client";
 
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Button, buttonVariants } from "@/components/ui/button";
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-
+import { Menu, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Header as HeaderType } from "@/types/blocks/header";
 import CreditsDisplay from "@/components/credits";
 import Icon from "@/components/icon";
 import { Link } from "@/i18n/navigation";
 import LocaleToggle from "@/components/locale/toggle";
-import { Menu } from "lucide-react";
 import SignToggle from "@/components/sign/toggle";
 import ThemeToggle from "@/components/theme/toggle";
-import { cn } from "@/lib/utils";
+
+function Brand({ header, compact = false }: { header: HeaderType; compact?: boolean }) {
+  return (
+    <Link href={(header.brand?.url as any) || "/"} className="group flex min-w-0 items-center gap-3">
+      {header.brand?.logo?.src ? (
+        <img src={header.brand.logo.src} alt={header.brand.logo.alt || header.brand.title} className="size-11 rounded-xl object-cover" />
+      ) : (
+        <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm shadow-primary/20 transition-transform group-hover:-rotate-3">
+          <Sparkles className="size-5" aria-hidden="true" />
+        </span>
+      )}
+      {header.brand?.title && (
+        <span className={`${compact ? "text-lg" : "text-xl xl:text-2xl"} truncate font-semibold tracking-[-0.03em] text-slate-950`}>
+          {header.brand.title}
+        </span>
+      )}
+    </Link>
+  );
+}
 
 export default function Header({ header }: { header: HeaderType }) {
-  if (header.disabled) {
-    return null;
-  }
+  if (header.disabled) return null;
 
   return (
-    <section className="py-3">
+    <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 shadow-[0_1px_0_rgba(15,23,42,0.02)] backdrop-blur-xl">
       <div className="container">
-        <nav className="hidden justify-between lg:flex">
-          <div className="flex items-center gap-6">
-            <Link
-              href={(header.brand?.url as any) || "/"}
-              className="flex items-center gap-2"
-            >
-              {header.brand?.logo?.src && (
-                <img
-                  src={header.brand.logo.src}
-                  alt={header.brand.logo.alt || header.brand.title}
-                  className="w-8"
-                />
-              )}
-              {header.brand?.title && (
-                <span className="text-xl text-primary font-bold">
-                  {header.brand?.title || ""}
-                </span>
-              )}
-            </Link>
-            <div className="flex items-center">
-              <NavigationMenu>
-                <NavigationMenuList>
-                  {header.nav?.items?.map((item, i) => {
-                    if (item.children && item.children.length > 0) {
-                      return (
-                        <NavigationMenuItem
-                          key={i}
-                          className="text-muted-foreground"
-                        >
-                          <NavigationMenuTrigger>
-                            {item.icon && (
-                              <Icon
-                                name={item.icon}
-                                className="size-4 shrink-0 mr-2"
-                              />
-                            )}
-                            <span>{item.title}</span>
-                          </NavigationMenuTrigger>
-                          <NavigationMenuContent>
-                            <ul className="w-80 p-3">
-                              <NavigationMenuLink>
-                                {item.children.map((iitem, ii) => (
-                                  <li key={ii}>
-                                    <Link
-                                      className={cn(
-                                        "flex select-none gap-4 rounded-md p-3 leading-none no-underline outline-hidden transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                                      )}
-                                      href={iitem.url as any}
-                                      target={iitem.target}
-                                    >
-                                      {iitem.icon && (
-                                        <Icon
-                                          name={iitem.icon}
-                                          className="size-5 shrink-0"
-                                        />
-                                      )}
-                                      <div>
-                                        <div className="text-sm font-semibold">
-                                          {iitem.title}
-                                        </div>
-                                        <p className="text-sm leading-snug text-muted-foreground">
-                                          {iitem.description}
-                                        </p>
-                                      </div>
-                                    </Link>
-                                  </li>
-                                ))}
-                              </NavigationMenuLink>
-                            </ul>
-                          </NavigationMenuContent>
-                        </NavigationMenuItem>
-                      );
-                    }
-
-                    return (
-                      <NavigationMenuItem key={i}>
-                        <Link
-                          className={cn(
-                            "text-muted-foreground",
-                            navigationMenuTriggerStyle,
-                            buttonVariants({
-                              variant: "ghost",
-                            })
-                          )}
-                          href={item.url as any}
-                          target={item.target}
-                        >
-                          {item.icon && (
-                            <Icon
-                              name={item.icon}
-                              className="size-4 shrink-0 mr-0"
-                            />
-                          )}
-                          {item.title}
-                        </Link>
-                      </NavigationMenuItem>
-                    );
-                  })}
-                </NavigationMenuList>
-              </NavigationMenu>
+        <nav className="hidden min-h-24 items-center justify-between gap-8 lg:flex" aria-label="Main navigation">
+          <div className="flex min-w-0 items-center gap-10 xl:gap-14">
+            <Brand header={header} />
+            <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50/80 p-1.5">
+              {header.nav?.items?.map((item) => (
+                <Link
+                  key={item.title}
+                  href={item.url as any}
+                  target={item.target}
+                  className="flex h-11 items-center gap-2 rounded-full px-4 text-sm font-medium text-slate-600 transition-colors hover:bg-white hover:text-slate-950 hover:shadow-sm"
+                >
+                  {item.icon && <Icon name={item.icon} className="size-4 text-primary" />}
+                  <span>{item.title}</span>
+                </Link>
+              ))}
             </div>
           </div>
-          <div className="shrink-0 flex gap-2 items-center">
+
+          <div className="flex shrink-0 items-center gap-2.5">
             {header.show_locale && <LocaleToggle />}
             {header.show_theme && <ThemeToggle />}
             <CreditsDisplay />
-
-            {header.buttons?.map((item, i) => {
-              return (
-                <Button key={i} variant={item.variant}>
-                  <Link
-                    href={item.url as any}
-                    target={item.target || ""}
-                    className="flex items-center gap-1 cursor-pointer"
-                  >
-                    {item.title}
-                    {item.icon && (
-                      <Icon name={item.icon} className="size-4 shrink-0" />
-                    )}
-                  </Link>
-                </Button>
-              );
-            })}
+            {header.buttons?.map((item) => (
+              <Button key={item.title} asChild variant={item.variant} className="h-11 rounded-full px-5">
+                <Link href={item.url as any} target={item.target || ""} className="flex items-center gap-2">
+                  {item.title}
+                  {item.icon && <Icon name={item.icon} className="size-4" />}
+                </Link>
+              </Button>
+            ))}
             {header.show_sign && <SignToggle />}
           </div>
         </nav>
 
-        <div className="block lg:hidden">
-          <div className="flex items-center justify-between">
-            <Link
-              href={(header.brand?.url || "/") as any}
-              className="flex items-center gap-2"
-            >
-              {header.brand?.logo?.src && (
-                <img
-                  src={header.brand.logo.src}
-                  alt={header.brand.logo.alt || header.brand.title}
-                  className="w-8"
-                />
-              )}
-              {header.brand?.title && (
-                <span className="text-xl font-bold">
-                  {header.brand?.title || ""}
-                </span>
-              )}
-            </Link>
+        <div className="flex min-h-20 items-center justify-between gap-4 lg:hidden">
+          <Brand header={header} compact />
+          <div className="flex shrink-0 items-center gap-2">
+            <CreditsDisplay />
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="default" size="icon">
-                  <Menu className="size-4" />
+                <Button variant="outline" size="icon" className="size-11 rounded-xl" aria-label="Open navigation">
+                  <Menu className="size-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent className="overflow-y-auto">
-                <SheetHeader>
-                  <SheetTitle>
-                    <Link
-                      href={(header.brand?.url || "/") as any}
-                      className="flex items-center gap-2"
-                    >
-                      {header.brand?.logo?.src && (
-                        <img
-                          src={header.brand.logo.src}
-                          alt={header.brand.logo.alt || header.brand.title}
-                          className="w-8"
-                        />
-                      )}
-                      {header.brand?.title && (
-                        <span className="text-xl font-bold">
-                          {header.brand?.title || ""}
-                        </span>
-                      )}
-                    </Link>
-                  </SheetTitle>
+              <SheetContent className="flex w-[min(88vw,380px)] flex-col overflow-y-auto p-6">
+                <SheetHeader className="border-b pb-5 text-left">
+                  <SheetTitle asChild><div><Brand header={header} compact /></div></SheetTitle>
                 </SheetHeader>
-                <div className="mb-8 mt-8 flex flex-col gap-4">
-                  <Accordion type="single" collapsible className="w-full">
-                    {header.nav?.items?.map((item, i) => {
-                      if (item.children && item.children.length > 0) {
-                        return (
-                          <AccordionItem
-                            key={i}
-                            value={item.title || ""}
-                            className="border-b-0"
-                          >
-                            <AccordionTrigger className="mb-4 py-0 font-semibold hover:no-underline text-left">
-                              {item.title}
-                            </AccordionTrigger>
-                            <AccordionContent className="mt-2">
-                              {item.children.map((iitem, ii) => (
-                                <Link
-                                  key={ii}
-                                  className={cn(
-                                    "flex select-none gap-4 rounded-md p-3 leading-none outline-hidden transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                                  )}
-                                  href={iitem.url as any}
-                                  target={iitem.target}
-                                >
-                                  {iitem.icon && (
-                                    <Icon
-                                      name={iitem.icon}
-                                      className="size-4 shrink-0"
-                                    />
-                                  )}
-                                  <div>
-                                    <div className="text-sm font-semibold">
-                                      {iitem.title}
-                                    </div>
-                                    <p className="text-sm leading-snug text-muted-foreground">
-                                      {iitem.description}
-                                    </p>
-                                  </div>
-                                </Link>
-                              ))}
-                            </AccordionContent>
-                          </AccordionItem>
-                        );
-                      }
-                      return (
-                        <Link
-                          key={i}
-                          href={item.url as any}
-                          target={item.target}
-                          className="font-semibold my-4 flex items-center gap-2 px-4"
-                        >
-                          {item.icon && (
-                            <Icon
-                              name={item.icon}
-                              className="size-4 shrink-0"
-                            />
-                          )}
-                          {item.title}
-                        </Link>
-                      );
-                    })}
-                  </Accordion>
-                </div>
-                <div className="flex-1"></div>
-                <div className="border-t pt-4">
-                  <div className="mt-2 flex flex-col gap-3">
-                    {header.buttons?.map((item, i) => {
-                      return (
-                        <Button key={i} variant={item.variant}>
-                          <Link
-                            href={item.url as any}
-                            target={item.target || ""}
-                            className="flex items-center gap-1"
-                          >
-                            {item.title}
-                            {item.icon && (
-                              <Icon
-                                name={item.icon}
-                                className="size-4 shrink-0"
-                              />
-                            )}
-                          </Link>
-                        </Button>
-                      );
-                    })}
-
-                    <div className="mt-1 flex">
-                      <CreditsDisplay />
-                    </div>
-                    {header.show_sign && <SignToggle />}
-                  </div>
-
-                  <div className="mt-4 flex items-center gap-2">
+                <nav className="mt-6 flex flex-col gap-2" aria-label="Mobile navigation">
+                  {header.nav?.items?.map((item) => (
+                    <Link key={item.title} href={item.url as any} target={item.target}
+                      className="flex min-h-14 items-center gap-3 rounded-xl px-4 font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-950">
+                      {item.icon && <span className="grid size-9 place-items-center rounded-lg bg-primary/10 text-primary"><Icon name={item.icon} className="size-4" /></span>}
+                      {item.title}
+                    </Link>
+                  ))}
+                </nav>
+                <div className="mt-auto space-y-3 border-t pt-6">
+                  {header.buttons?.map((item) => (
+                    <Button key={item.title} asChild variant={item.variant} className="h-12 w-full rounded-xl">
+                      <Link href={item.url as any} target={item.target || ""}>{item.title}</Link>
+                    </Button>
+                  ))}
+                  {header.show_sign && <div className="flex min-h-12 items-center rounded-xl bg-slate-50 px-3"><SignToggle /></div>}
+                  <div className="flex items-center gap-2">
                     {header.show_locale && <LocaleToggle />}
-                    <div className="flex-1"></div>
-
                     {header.show_theme && <ThemeToggle />}
                   </div>
                 </div>
@@ -319,6 +110,6 @@ export default function Header({ header }: { header: HeaderType }) {
           </div>
         </div>
       </div>
-    </section>
+    </header>
   );
 }

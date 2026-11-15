@@ -1,130 +1,34 @@
-"use client";
-
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
-  Carousel,
-  CarouselApi,
-  CarouselContent,
-  CarouselItem,
-} from "@/components/ui/carousel";
-import { useEffect, useState } from "react";
-
 import { Badge } from "@/components/ui/badge";
-import Fade from "embla-carousel-fade";
 import Icon from "@/components/icon";
 import { Section as SectionType } from "@/types/blocks/section";
 
-const DURATION = 5000;
-
 export default function Feature2({ section }: { section: SectionType }) {
-  if (section.disabled) {
-    return null;
-  }
-
-  const [api, setApi] = useState<CarouselApi>();
-  const [currentAccordion, setCurrentAccordion] = useState("1");
-
-  useEffect(() => {
-    api?.scrollTo(+currentAccordion - 1);
-    const interval = setInterval(() => {
-      setCurrentAccordion((prev) => {
-        const next = parseInt(prev) + 1;
-        return next > 3 ? "1" : next.toString();
-      });
-    }, DURATION);
-
-    return () => clearInterval(interval);
-  }, [api, currentAccordion]);
+  if (section.disabled) return null;
 
   return (
-    <section id={section.name} className="py-32">
+    <section id={section.name} className="bg-white py-20 sm:py-24">
       <div className="container">
-        <div className="mx-auto grid gap-20 lg:grid-cols-2">
-          <div>
-            {section.label && (
-              <Badge variant="outline" className="mb-4">
-                {section.label}
-              </Badge>
-            )}
-            <h2 className="mb-6 text-pretty text-3xl font-bold lg:text-4xl">
-              {section.title}
-            </h2>
-            <p className="mb-4 max-w-xl text-muted-foreground lg:max-w-none lg:text-lg">
-              {section.description}
-            </p>
-            <Accordion
-              type="single"
-              value={currentAccordion}
-              onValueChange={(value) => {
-                setCurrentAccordion(value);
-                console.log(value);
-                api?.scrollTo(+value - 1);
-              }}
-            >
-              {section.items?.map((item, i) => (
-                <AccordionItem
-                  key={i}
-                  value={(i + 1).toString()}
-                  className="border-b-0 border-secondary"
-                >
-                  <AccordionTrigger className="text-left data-[state=closed]:text-muted-foreground">
-                    <div className="flex items-center justify-between gap-2">
-                      {item.icon && (
-                        <p className="flex size-9 items-center justify-center rounded-lg bg-muted">
-                          <Icon
-                            name={item.icon}
-                            className="size-5 shrink-0 lg:size-6"
-                          />
-                        </p>
-                      )}
-                      <span className="font-medium lg:text-lg">
-                        {item.title}
-                      </span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground lg:text-base">
-                    {item.description}
-                    <div className="mt-8 h-px bg-muted">
-                      <div
-                        className="h-px animate-progress bg-primary"
-                        style={{
-                          animationDuration: `${DURATION}ms`,
-                        }}
-                      ></div>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          </div>
-          <div>
-            <Carousel
-              opts={{
-                duration: 50,
-              }}
-              setApi={setApi}
-              plugins={[Fade()]}
-            >
-              <CarouselContent>
-                {section.items?.map((item, i) => (
-                  <CarouselItem key={i}>
-                    <div>
-                      <img
-                        src={item.image?.src}
-                        alt={item.image?.alt || item.title}
-                        className="max-h-auto w-full object-cover lg:max-h-none rounded-md"
-                      />
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-            </Carousel>
-          </div>
+        <div className="mx-auto max-w-3xl text-center">
+          {section.label && <Badge variant="outline" className="rounded-full border-primary/20 bg-primary/5 px-3 py-1 text-primary">{section.label}</Badge>}
+          <h2 className="mt-5 text-pretty text-3xl font-semibold tracking-[-0.035em] text-slate-950 lg:text-5xl">{section.title}</h2>
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-600 lg:text-lg">{section.description}</p>
+        </div>
+        <div className="mt-12 grid gap-5 lg:grid-cols-3">
+          {section.items?.map((item) => (
+            <article key={item.title} className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              {item.image?.src && (
+                <div className="overflow-hidden">
+                  <img src={item.image.src} alt={item.image.alt || item.title}
+                    className="aspect-[4/3] w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
+                </div>
+              )}
+              <div className="p-6">
+                {item.icon && <span className="mb-5 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary"><Icon name={item.icon} className="size-5" /></span>}
+                <h3 className="text-lg font-semibold text-slate-950">{item.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
+              </div>
+            </article>
+          ))}
         </div>
       </div>
     </section>

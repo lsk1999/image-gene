@@ -9,20 +9,22 @@ export default function CTA({ section }: { section: SectionType }) {
   }
 
   return (
-    <section id={section.name} className="py-16">
-      <div className="px-8">
-        <div className='flex items-center justify-center rounded-2xl  bg-[url("/imgs/masks/circle.svg")] bg-cover bg-center px-8 py-12 text-center md:p-16'>
-          <div className="mx-auto max-w-(--breakpoint-md)">
-            <h2 className="mb-4 text-balance text-3xl font-semibold md:text-5xl">
+    <section id={section.name} className="bg-[#f7f8f4] py-20">
+      <div className="container">
+        <div className="relative overflow-hidden rounded-[2rem] bg-slate-950 px-6 py-14 text-center text-white shadow-2xl shadow-slate-950/10 md:p-20">
+          <div aria-hidden className="absolute -left-24 -top-24 size-80 rounded-full bg-primary/30 blur-3xl" />
+          <div aria-hidden className="absolute -bottom-32 -right-20 size-96 rounded-full bg-amber-300/15 blur-3xl" />
+          <div className="relative mx-auto max-w-3xl">
+            <h2 className="text-balance text-3xl font-semibold tracking-[-0.035em] md:text-5xl">
               {section.title}
             </h2>
-            <p className="text-muted-foreground md:text-lg">
+            <p className="mx-auto mt-5 max-w-2xl text-slate-300 md:text-lg">
               {section.description}
             </p>
             {section.buttons && (
-              <div className="mt-8 flex flex-col justify-center gap-4 sm:flex-row">
+              <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
                 {section.buttons.map((item, idx) => (
-                  <Button key={idx} variant={item.variant || "default"}>
+                  <Button key={idx} variant={item.variant || "default"} className={`h-12 rounded-xl px-6 ${item.variant === "outline" ? "border-white/20 bg-white/5 text-white hover:bg-white/10 hover:text-white" : ""}`}>
                     <Link
                       href={item.url || ""}
                       target={item.target}
