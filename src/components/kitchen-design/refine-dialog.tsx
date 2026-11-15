@@ -10,6 +10,13 @@ import { KITCHEN_DESIGN_CREDIT_COST } from "./data";
 type Result = KitchenDesignState["generationResults"][number];
 type SavedDesign = KitchenDesignState["generationHistory"][number];
 
+const SUGGESTIONS = [
+  "Change only the upper cabinets.",
+  "Keep the existing layout.",
+  "Make the room brighter and warmer.",
+  "Add more closed storage.",
+];
+
 export function RefineDialog({ open, onOpenChange, result, onSaved, onBusyChange, onAccessRequired, restoreFocus }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -114,19 +121,30 @@ export function RefineDialog({ open, onOpenChange, result, onSaved, onBusyChange
           </figure>
           <form onSubmit={refine} className="flex min-h-0 flex-1 flex-col border-t md:w-[360px] md:flex-none md:border-t-0 md:border-l">
             <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-5">
-              <label className="block text-sm font-medium">
-                What would you like to change?
+              <div className="space-y-2">
+                <label htmlFor="refine-instruction" className="block text-sm font-medium">
+                  What would you like to change?
+                </label>
                 <textarea
-                  className="mt-2 block w-full resize-y rounded-lg border bg-background p-3 text-sm"
+                  id="refine-instruction"
+                  className="block w-full resize-y rounded-lg border bg-background p-3 text-sm"
                   rows={4}
                   maxLength={1000}
-                  placeholder="Change only the upper cabinets to light oak. Keep the existing layout, countertop, and lighting."
                   value={instruction}
                   disabled={pending}
                   required
                   onChange={(event) => setInstruction(event.target.value)}
                 />
-              </label>
+                <div className="flex flex-wrap gap-2">
+                  {SUGGESTIONS.map((text) => (
+                    <button key={text} type="button" disabled={pending}
+                      className="rounded-full bg-slate-100 px-3 py-2 text-xs hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+                      onClick={() => setInstruction((current) => [current, text].filter(Boolean).join("\n").slice(0, 1000))}>
+                      + {text}
+                    </button>
+                  ))}
+                </div>
+              </div>
               {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
               {savedResultId === result.id && (
                 <p role="status" className="text-sm text-muted-foreground">New result saved.</p>

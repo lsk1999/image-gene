@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Download, ExternalLink, Heart, ImageIcon, Pencil, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Download, ImageIcon, Pencil, Sparkles } from "lucide-react";
 import type { KitchenDesignState } from "./data";
 import type { UpdateDesign } from "./selectors";
 import { RefineDialog } from "./refine-dialog";
@@ -116,7 +115,7 @@ export function KitchenDesignResults({
         </button>
       )}
       <div className="flex min-h-[540px] flex-1 flex-col p-3 sm:p-4 lg:min-h-0">
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-sm">
           {busy ? (
             <div role="status" className="flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-white to-primary/5 px-5 py-10 text-center">
               <div aria-hidden="true" className="relative grid size-32 place-items-center">
@@ -133,67 +132,57 @@ export function KitchenDesignResults({
             </div>
           ) : activeResult ? (
             <>
-              <figure className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-slate-100 p-2 sm:p-3">
+              <figure className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-slate-100 p-3 sm:p-4">
                 <img
                   src={activeResult.url}
                   alt={`Generated kitchen concept ${activeIndex + 1}`}
-                  className="h-full w-full rounded-lg object-contain"
+                  className="max-h-full max-w-full rounded-xl object-contain shadow-[0_16px_48px_rgba(15,23,42,0.18)] ring-1 ring-slate-950/10"
                 />
+                <span className="absolute bottom-3 right-3 rounded-md bg-slate-950/60 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">AI result</span>
 
-                <div className="absolute right-3 top-3 flex items-center gap-1 rounded-xl bg-white/85 p-1 shadow-sm ring-1 ring-slate-950/5 backdrop-blur-md sm:right-4 sm:top-4">
-                  <Button
+                <div className="absolute right-3 top-1/2 flex -translate-y-1/2 flex-col gap-2.5 sm:right-4">
+                  <button
                     ref={editButton}
-                    variant="secondary"
-                    className="h-8 gap-1.5 px-2.5 text-xs"
+                    type="button"
+                    title="Edit this design"
                     disabled={refining}
                     onClick={() => {
                       if (editResult?.id !== activeResult.id) setEditorSession((session) => session + 1);
                       setEditResult(activeResult);
                       setEditorOpen(true);
                     }}
+                    className="flex w-[70px] flex-col items-center gap-2 rounded-2xl bg-primary px-1 py-4 text-[11px] font-semibold leading-tight text-primary-foreground shadow-xl shadow-primary/40 ring-2 ring-white/70 transition-all hover:-translate-y-0.5 hover:scale-[1.04] hover:shadow-2xl hover:shadow-primary/50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:scale-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/40"
                   >
-                    <Pencil size={15} /> <span>Edit Design</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="h-8 w-8 p-0"
-                    title="Save to favorites"
-                    aria-label="Save to favorites"
-                    aria-pressed={state.favoriteId === activeResult.id}
-                    onClick={() => update({ favoriteId: state.favoriteId === activeResult.id ? null : activeResult.id })}
+                    <Pencil size={20} /> <span>Edit</span>
+                  </button>
+                  <button
+                    type="button"
+                    title="Download this design"
+                    disabled={downloading}
+                    onClick={() => void downloadResult()}
+                    className="flex w-[70px] flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white px-1 py-4 text-[11px] font-semibold leading-tight text-slate-800 shadow-xl ring-2 ring-white/70 transition-all hover:-translate-y-0.5 hover:scale-[1.04] hover:bg-white hover:shadow-2xl disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:scale-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/40"
                   >
-                    <Heart size={16} className={state.favoriteId === activeResult.id ? "fill-primary text-primary" : ""} />
-                  </Button>
-                  <Button asChild variant="ghost" className="h-8 w-8 p-0" title="Open full size">
-                    <a href={activeResult.url} target="_blank" rel="noreferrer" aria-label="Open full size">
-                      <ExternalLink size={16} />
-                    </a>
-                  </Button>
-                  <Button className="h-8 gap-1.5 px-2.5 text-xs" onClick={() => void downloadResult()} disabled={downloading}>
-                    <Download size={15} />
-                    <span className="hidden sm:inline">{downloading ? "Saving…" : "Download"}</span>
-                  </Button>
+                    <Download size={20} /> <span>{downloading ? "Saving" : "Download"}</span>
+                  </button>
                 </div>
-
-                <span className="absolute bottom-3 right-3 rounded-md bg-slate-950/60 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">AI result</span>
-
-                {state.generationResults.length > 1 && (
-                  <div className="absolute bottom-6 left-6 flex gap-2 rounded-xl bg-white/90 p-2 shadow-sm backdrop-blur">
-                    {state.generationResults.map((result, index) => (
-                      <button
-                        key={result.id}
-                        type="button"
-                        aria-label={`View result ${index + 1}`}
-                        aria-pressed={result.id === activeResult.id}
-                        onClick={() => setActiveIndex(index)}
-                        className={`shrink-0 overflow-hidden rounded-md border-2 ${result.id === activeResult.id ? "border-primary" : "border-transparent"}`}
-                      >
-                        <img src={result.url} alt={`Result ${index + 1}`} className="h-12 w-16 object-cover" />
-                      </button>
-                    ))}
-                  </div>
-                )}
               </figure>
+
+              {state.generationResults.length > 1 && (
+                <div className="flex shrink-0 gap-2 overflow-x-auto border-t border-slate-200 bg-white px-3 py-2.5 sm:px-4">
+                  {state.generationResults.map((result, index) => (
+                    <button
+                      key={result.id}
+                      type="button"
+                      aria-label={`View result ${index + 1}`}
+                      aria-pressed={result.id === activeResult.id}
+                      onClick={() => setActiveIndex(index)}
+                      className={`h-14 w-20 shrink-0 overflow-hidden rounded-lg border transition-opacity ${result.id === activeResult.id ? "border-primary ring-1 ring-primary" : "border-slate-200 opacity-75 hover:opacity-100"}`}
+                    >
+                      <img src={result.url} alt={`Result ${index + 1}`} className="h-full w-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
             </>
           ) : (
             <div className="flex flex-1 flex-col items-center justify-center text-center">
@@ -213,7 +202,9 @@ export function KitchenDesignResults({
             <h2 className="text-base font-semibold text-slate-950">Previous Results</h2>
           </div>
           {state.generationHistory.length > 0 && (
-            <span className="shrink-0 text-xs text-slate-400">{state.generationHistory.length} saved</span>
+            <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-500">
+              {state.generationHistory.length} saved
+            </span>
           )}
         </div>
 
@@ -234,7 +225,7 @@ export function KitchenDesignResults({
                   disabled={busy || readingPhoto}
                   aria-label={`Open ${run.summary}`}
                   aria-pressed={selected}
-                  className={`group relative h-24 w-32 shrink-0 overflow-hidden rounded-lg border bg-slate-100 text-left transition-colors sm:w-36 ${selected ? "border-primary ring-1 ring-primary" : "border-slate-200 hover:border-slate-400"}`}
+                  className={`group relative h-24 w-32 shrink-0 overflow-hidden rounded-xl border bg-slate-100 text-left shadow-sm transition-colors sm:w-36 ${selected ? "border-primary ring-1 ring-primary" : "border-slate-200 hover:border-slate-400"}`}
                 >
                   <img
                     src={result.url}

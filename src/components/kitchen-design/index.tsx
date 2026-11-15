@@ -45,14 +45,19 @@ export default function KitchenDesignPage() {
   const [refining, setRefining] = useState(false);
   const [ready, setReady] = useState(false);
   const [readingPhoto, setReadingPhoto] = useState(false);
+  const [authPrompt, setAuthPrompt] = useState(false);
   const controller = useRef<AbortController | null>(null);
   const lastGeneration = useRef<{ photo: KitchenDesignState["originalImage"]; settings: string; id: string } | null>(null);
   const redirectDraft = useRef<ReturnType<typeof takeRedirectDraft> | null>(null);
   const router = useRouter();
   const { user, setUser, authStatus } = useAppContext();
-  const showCredits = isAuthEnabled() && authStatus === "authenticated";
+  const creditsReady =
+    isAuthEnabled() &&
+    authStatus !== "loading" &&
+    (authStatus !== "authenticated" || Boolean(user?.credits));
   const leftCredits = user?.credits?.left_credits ?? 0;
-  const outOfCredits = showCredits && leftCredits < KITCHEN_DESIGN_CREDIT_COST;
+  const outOfCredits =
+    authStatus === "authenticated" && Boolean(user?.credits) && leftCredits < KITCHEN_DESIGN_CREDIT_COST;
   const { keepExistingFurniture, designStyle, selectedAreas, materialPreferences, customPreferences } = state;
   const draft = useMemo(() => ({ keepExistingFurniture, designStyle, selectedAreas, materialPreferences, customPreferences }),
     [keepExistingFurniture, designStyle, selectedAreas, materialPreferences, customPreferences]);
@@ -149,6 +154,22 @@ export default function KitchenDesignPage() {
     }
   }
 
+  async function startSignIn() {
+    if (authStatus === "loading") return;
+    if (!isGoogleAuthEnabled()) {
+      setError("Google sign-in is currently unavailable.");
+      return;
+    }
+    setError("");
+    try {
+      await saveRedirectDraft(state);
+    } catch {
+      setError("Could not keep your photo across pages. Allow site storage and try again.");
+      return;
+    }
+    await signIn("google", { redirectTo: window.location.href });
+  }
+
   async function generate() {
     if (!ready || controller.current || refining) return;
     if (validationMessage) {
@@ -157,16 +178,17 @@ export default function KitchenDesignPage() {
     }
 
     setError("");
-    setBusy(true);
     const abort = new AbortController();
     controller.current = abort;
 
     try {
       const session = isAuthEnabled() ? await getSession() : null;
       if (!session?.user?.uuid) {
-        await handleAccess(401);
+        // Do not jump to Google automatically; prompt in place instead.
+        setAuthPrompt(true);
         return;
       }
+      setBusy(true);
       const parameters = getDesignParameters(state);
       const settings = JSON.stringify(parameters);
       const previous = lastGeneration.current;
@@ -205,12 +227,12 @@ export default function KitchenDesignPage() {
         ].slice(0, 50),
       }));
     } catch (failure) {
-      if (failure instanceof KitchenRequestError && (failure.status === 401 || failure.status === 402) && !abort.signal.aborted) {
-        try {
-          await handleAccess(failure.status);
-        } catch (accessError) {
-          setError(accessError instanceof Error ? accessError.message : "Could not continue. Please try again.");
-        }
+      if (failure instanceof KitchenRequestError && failure.status === 401 && !abort.signal.aborted) {
+        setAuthPrompt(true);
+        return;
+      }
+      if (failure instanceof KitchenRequestError && failure.status === 402 && !abort.signal.aborted) {
+        router.push("/pricing");
         return;
       }
       if (!abort.signal.aborted) {
@@ -287,28 +309,43 @@ export default function KitchenDesignPage() {
               {error && <p role="alert" className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div className="text-base font-semibold text-slate-950">Generate</div>
-                {isAuthEnabled() && authStatus !== "loading" && (
-                  <span
-                    className={`flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium leading-none ${
-                      outOfCredits ? "border-red-200 bg-red-50 text-red-600" : "border-slate-200 bg-slate-50 text-slate-600"
-                    }`}
-                  >
+                {creditsReady && (
+                  <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium leading-none text-slate-600">
                     <Coins aria-hidden="true" className="size-3.5 text-primary" />
                     <span className="text-sm font-semibold tabular-nums">{leftCredits}</span>
-                    <span className={outOfCredits ? "text-red-500" : "text-slate-400"}>credits left</span>
+                    <span className="text-slate-400">credits left</span>
                   </span>
                 )}
               </div>
               {isAuthEnabled() && authStatus === "unauthenticated" && (
-                <p className="mb-3 flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs leading-5 text-slate-600">
-                  <Gift aria-hidden="true" className="size-3.5 shrink-0 text-primary" />
-                  <span>Sign in with Google to get your free design credits.</span>
-                </p>
+                <div
+                  aria-live="polite"
+                  className={`mb-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border px-3 py-2.5 leading-5 ${authPrompt ? "border-primary/40 bg-primary/10 text-slate-700 shadow-sm" : "border-primary/20 bg-primary/5 text-slate-600"}`}
+                >
+                  <Gift aria-hidden="true" className={`shrink-0 text-primary ${authPrompt ? "size-4" : "size-3.5"}`} />
+                  <div className="min-w-0 flex-1 text-xs">
+                    {authPrompt ? (
+                      <>
+                        <p className="text-sm font-semibold text-slate-900">Sign in to generate your design</p>
+                        <p className="mt-0.5">Free credits are added automatically after you sign in with Google.</p>
+                      </>
+                    ) : (
+                      <p>Sign in with Google to get your free design credits.</p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void startSignIn()}
+                    className={`shrink-0 rounded-full bg-primary font-semibold text-primary-foreground transition-colors hover:bg-primary/90 ${authPrompt ? "px-3.5 py-2 text-sm" : "px-3 py-1.5 text-xs"}`}
+                  >
+                    Sign in
+                  </button>
+                </div>
               )}
               {outOfCredits && (
-                <p className="mb-3 flex flex-wrap items-center gap-x-1.5 gap-y-1 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs leading-5 text-red-600">
+                <p className="mb-3 flex flex-wrap items-center gap-x-1.5 gap-y-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600">
                   <span>You need {KITCHEN_DESIGN_CREDIT_COST} credit to generate.</span>
-                  <Link href="/pricing" className="font-semibold underline underline-offset-2">Get more credits</Link>
+                  <Link href="/pricing" className="font-semibold text-primary underline underline-offset-2">Get more credits</Link>
                 </p>
               )}
               <Button

@@ -156,7 +156,6 @@ export function AdditionalRequirements({ state, update }: { state: KitchenDesign
         aria-label="Additional requirements"
         rows={6}
         maxLength={3000}
-        placeholder="Describe any other changes you’d like…"
         value={state.customPreferences}
         onChange={event => update({ customPreferences: event.target.value })}
       />

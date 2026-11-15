@@ -56,11 +56,13 @@ function normalizeDraft(value: unknown): Partial<DesignParameters> {
 export function loadDraft(): Partial<DesignParameters> {
   try {
     const raw = localStorage.getItem(key);
-    if (raw) return normalizeDraft(JSON.parse(raw));
+    // Custom preferences are intentionally not restored from saved drafts:
+    // the field must always start empty, never show a previous request.
+    if (raw) return { ...normalizeDraft(JSON.parse(raw)), customPreferences: "" };
     const legacy = localStorage.getItem(legacyKey);
     if (!legacy) return {};
     const saved = JSON.parse(legacy);
-    const parameters = normalizeDraft(saved?.state);
+    const parameters = { ...normalizeDraft(saved?.state), customPreferences: "" };
     localStorage.setItem(key, JSON.stringify(parameters));
     // Remove obsolete image/history caches only after the new draft is saved.
     localStorage.removeItem(legacyKey);
