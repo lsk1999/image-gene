@@ -29,3 +29,9 @@ button {
 pre {
   @apply px-4;
 }
+
+/* Landing hero before/after comparison */
+.hero-compare {
+  --reveal: 0;
+  --divider-opacity: 0;
+}

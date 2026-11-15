@@ -9,25 +9,21 @@
         { "title": "Pricing", "url": "/pricing", "icon": "RiMoneyDollarCircleLine" }
       ]
     },
-    "buttons": [
-      { "title": "Design now", "url": "/ai-kitchen-design", "variant": "default", "icon": "RiArrowRightLine" }
-    ],
     "show_sign": true,
     "show_theme": false,
     "show_locale": false
   },
   "hero": {
     "announcement": { "title": "AI kitchen concepts from your own photo" },
-    "title": "Design your dream kitchen with AI",
-    "highlight_text": "dream kitchen",
-    "description": "Upload a photo of your kitchen, choose the look and details you want, and turn your ideas into a photorealistic design.",
+    "title": "AI kitchen design and remodel in seconds",
+    "highlight_text": "AI kitchen design",
+    "description": "Upload one photo and see your kitchen rebuilt in your chosen style — or describe exactly what you want changed.",
     "buttons": [
-      { "title": "Start Designing", "icon": "RiSparkling2Line", "url": "/ai-kitchen-design", "target": "_self", "variant": "default" },
-      { "title": "View Pricing", "url": "/pricing", "target": "_self", "variant": "outline" }
+      { "title": "Start Designing", "icon": "RiSparkling2Line", "url": "/ai-kitchen-design", "target": "_self", "variant": "default" }
     ],
     "show_happy_users": false,
     "show_badge": false,
-    "benefits": ["1 free design credit", "Results saved to your account"],
+    "benefits": ["Free design credits", "Photorealistic results, no design skills needed"],
     "preview_title": "Your kitchen, redesigned",
     "preview_description": "A photorealistic concept based on your room",
     "preview_status": "Ready to refine",
@@ -36,9 +32,15 @@
     "control_label": "Guide the details",
     "control_description": "Style, materials and more",
     "image": {
-      "src": "/imgs/kitchen-styles/contemporary.jpg",
-      "alt": "Contemporary kitchen with marble surfaces and warm layered lighting"
-    }
+      "src": "/imgs/kitchen-compare/before.jpg",
+      "alt": "Dated kitchen with worn oak cabinets before redesign"
+    },
+    "after_image": {
+      "src": "/imgs/kitchen-compare/after.jpg",
+      "alt": "The same kitchen redesigned with white cabinets and marble surfaces"
+    },
+    "before_label": "Before",
+    "after_label": "After"
   },
   "introduce": {
     "name": "how-it-works",

@@ -9,25 +9,21 @@
         { "title": "价格", "url": "/pricing", "icon": "RiMoneyDollarCircleLine" }
       ]
     },
-    "buttons": [
-      { "title": "立即设计", "url": "/ai-kitchen-design", "variant": "default", "icon": "RiArrowRightLine" }
-    ],
     "show_sign": true,
     "show_theme": false,
     "show_locale": false
   },
   "hero": {
     "announcement": { "title": "从你的真实照片开始设计厨房" },
-    "title": "用 AI 设计你的梦想厨房",
-    "highlight_text": "梦想厨房",
-    "description": "上传你的厨房照片，选择喜欢的风格和细节，把想法变成逼真的厨房设计效果图。",
+    "title": "用 AI 设计、改造你的厨房，只需几秒钟",
+    "highlight_text": "AI 设计",
+    "description": "上传一张厨房照片，选定风格即可看到改造效果，也可以直接说明你想改什么。",
     "buttons": [
-      { "title": "开始设计", "icon": "RiSparkling2Line", "url": "/ai-kitchen-design", "target": "_self", "variant": "default" },
-      { "title": "查看价格", "url": "/pricing", "target": "_self", "variant": "outline" }
+      { "title": "开始设计", "icon": "RiSparkling2Line", "url": "/ai-kitchen-design", "target": "_self", "variant": "default" }
     ],
     "show_happy_users": false,
     "show_badge": false,
-    "benefits": ["首次登录赠送 1 个设计积分", "生成结果自动保存到账户"],
+    "benefits": ["免费设计积分", "效果逼真，无需设计基础"],
     "preview_title": "重新设计你的厨房",
     "preview_description": "基于真实空间生成逼真的设计方案",
     "preview_status": "可继续修改",
@@ -36,9 +32,15 @@
     "control_label": "掌控重要细节",
     "control_description": "风格、材料及更多偏好",
     "image": {
-      "src": "/imgs/kitchen-styles/contemporary.jpg",
-      "alt": "当代风格厨房效果图，石材台面与温暖的分层照明"
-    }
+      "src": "/imgs/kitchen-compare/before.jpg",
+      "alt": "改造前老旧的厨房，橱柜磨损、台面泛黄"
+    },
+    "after_image": {
+      "src": "/imgs/kitchen-compare/after.jpg",
+      "alt": "同一个厨房改造后，白色橱柜搭配大理石台面"
+    },
+    "before_label": "改造前",
+    "after_label": "改造后"
   },
   "introduce": {
     "name": "how-it-works",
