@@ -41,19 +41,29 @@ export function RefineDialog({ open, onOpenChange, result, onSaved, onBusyChange
       if (lastRequest.current?.input !== key) {
         lastRequest.current = { input: key, id: crypto.randomUUID() };
       }
-      const response = await fetch("/api/kitchen-design/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...input, requestId: lastRequest.current.id }),
-      });
-      const payload = await response.json().catch(() => null);
+      let requestId = lastRequest.current.id;
+      let response: Response;
+      let payload: any;
+      for (let attempt = 0; ; attempt += 1) {
+        response = await fetch("/api/kitchen-design/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...input, requestId }),
+        });
+        payload = await response.json().catch(() => null);
+        // 422 means this exact task is confirmed failed. Start one fresh task
+        // in the same click; never do this for an unknown network outcome.
+        if (response.status !== 422 || attempt > 0) break;
+        requestId = crypto.randomUUID();
+        lastRequest.current = { input: key, id: requestId };
+      }
       if (!response.ok || payload?.code !== 0) {
         if (response.status === 422) lastRequest.current = null;
         throw new Error(payload?.message || "Could not confirm the edit. Try again to check the same request.");
       }
 
       const saved = payload.data as SavedDesign | undefined;
-      if (!saved || saved.id !== lastRequest.current.id || saved.results?.[0]?.id !== saved.id ||
+      if (!saved || saved.id !== requestId || saved.results?.[0]?.id !== saved.id ||
         saved.results[0].url !== `/api/kitchen-design/images/${saved.id}?kind=result`) {
         throw new Error("Could not confirm the saved result. Try again to check the same request.");
       }

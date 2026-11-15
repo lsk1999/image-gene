@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/sheet";
 
 import { Header as HeaderType } from "@/types/blocks/header";
+import CreditsDisplay from "@/components/credits";
 import Icon from "@/components/icon";
 import { Link } from "@/i18n/navigation";
 import LocaleToggle from "@/components/locale/toggle";
@@ -146,6 +147,7 @@ export default function Header({ header }: { header: HeaderType }) {
           <div className="shrink-0 flex gap-2 items-center">
             {header.show_locale && <LocaleToggle />}
             {header.show_theme && <ThemeToggle />}
+            <CreditsDisplay />
 
             {header.buttons?.map((item, i) => {
               return (
@@ -299,6 +301,9 @@ export default function Header({ header }: { header: HeaderType }) {
                       );
                     })}
 
+                    <div className="mt-1 flex">
+                      <CreditsDisplay />
+                    </div>
                     {header.show_sign && <SignToggle />}
                   </div>
 

@@ -40,6 +40,7 @@ export default function KitchenDesignPage() {
   const [busy, setBusy] = useState(false);
   const [refining, setRefining] = useState(false);
   const [ready, setReady] = useState(false);
+  const [readingPhoto, setReadingPhoto] = useState(false);
   const controller = useRef<AbortController | null>(null);
   const { keepExistingFurniture, designStyle, selectedAreas, materialPreferences, customPreferences } = state;
   const draft = useMemo(() => ({ keepExistingFurniture, designStyle, selectedAreas, materialPreferences, customPreferences }),
@@ -79,6 +80,7 @@ export default function KitchenDesignPage() {
   }
 
   function validate() {
+    if (readingPhoto) return "Reading your photo. Please wait.";
     if (!state.originalImage) {
       return "Upload a kitchen photo before generating.";
     }
@@ -96,9 +98,10 @@ export default function KitchenDesignPage() {
     return "";
   }
 
+  const validationMessage = validate();
+
   async function generate() {
-    if (controller.current || refining) return;
-    const validationMessage = validate();
+    if (!ready || controller.current || refining) return;
     if (validationMessage) {
       setError(validationMessage);
       return;
@@ -168,6 +171,9 @@ export default function KitchenDesignPage() {
                   state={state}
                   update={update}
                   onError={setError}
+                  reading={readingPhoto}
+                  onReadingChange={setReadingPhoto}
+                  locked={busy}
                 />
               </ConfigSection>
 
@@ -202,24 +208,21 @@ export default function KitchenDesignPage() {
             <div className="shrink-0 border-t border-slate-200 bg-white p-6 sm:p-7">
               {error && <p role="alert" className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
               <div className="mb-4 text-base font-semibold text-slate-950">Generate & Refine</div>
-              {busy ? (
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="h-14 w-full text-base"
-                  onClick={() => controller.current?.abort()}
-                >
-                  <Loader2 className="animate-spin" /> <span>Cancel generation</span>
-                </Button>
-              ) : (
-                <Button
-                  size="lg"
-                  className="h-14 w-full text-base"
-                  disabled={refining}
-                  onClick={() => void generate()}
-                >
-                  <Sparkles /> <span>Generate Design</span>
-                </Button>
+              <Button
+                type="button"
+                size="lg"
+                className="h-14 w-full text-base"
+                disabled={!ready || busy || refining || Boolean(validationMessage)}
+                aria-describedby={ready && !busy && !refining && validationMessage ? "kitchen-generate-hint" : undefined}
+                onClick={() => void generate()}
+              >
+                <Loader2 aria-hidden="true" className={busy ? "motion-safe:animate-spin" : "hidden"} />
+                <Sparkles aria-hidden="true" className={busy ? "hidden" : undefined} />
+                <span className={busy ? "inline" : "hidden"}>Generating design…</span>
+                <span className={busy ? "hidden" : "inline"}>Generate Design</span>
+              </Button>
+              {ready && !busy && !refining && validationMessage && (
+                <p id="kitchen-generate-hint" className="mt-2 text-xs leading-5 text-slate-600">{validationMessage}</p>
               )}
             </div>
           </aside>
@@ -230,9 +233,9 @@ export default function KitchenDesignPage() {
               update={update}
               busy={busy}
               refining={refining}
+              readingPhoto={readingPhoto}
               onRefiningChange={setRefining}
               onRefinementSaved={saveRefinement}
-              cancel={() => controller.current?.abort()}
               onError={setError}
             />
           </div>

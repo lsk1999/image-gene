@@ -9,12 +9,9 @@
         { "title": "Pricing", "url": "/pricing", "icon": "RiMoneyDollarCircleLine" }
       ]
     },
-    "buttons": [
-      { "title": "Design Your Kitchen", "url": "/ai-kitchen-design", "variant": "default", "icon": "RiArrowRightLine" }
-    ],
     "show_sign": true,
-    "show_theme": true,
-    "show_locale": true
+    "show_theme": false,
+    "show_locale": false
   },
   "hero": {
     "title": "Design your dream kitchen with AI",
@@ -25,7 +22,11 @@
       { "title": "View Pricing", "url": "/pricing", "target": "_self", "variant": "outline" }
     ],
     "show_happy_users": false,
-    "show_badge": false
+    "show_badge": false,
+    "image": {
+      "src": "/imgs/kitchen-styles/contemporary.jpg",
+      "alt": "Contemporary kitchen with marble surfaces and warm layered lighting"
+    }
   },
   "introduce": {
     "name": "how-it-works",

@@ -9,12 +9,9 @@
         { "title": "价格", "url": "/pricing", "icon": "RiMoneyDollarCircleLine" }
       ]
     },
-    "buttons": [
-      { "title": "开始设计厨房", "url": "/ai-kitchen-design", "variant": "default", "icon": "RiArrowRightLine" }
-    ],
     "show_sign": true,
-    "show_theme": true,
-    "show_locale": true
+    "show_theme": false,
+    "show_locale": false
   },
   "hero": {
     "title": "用 AI 设计你的梦想厨房",
@@ -25,7 +22,11 @@
       { "title": "查看价格", "url": "/pricing", "target": "_self", "variant": "outline" }
     ],
     "show_happy_users": false,
-    "show_badge": false
+    "show_badge": false,
+    "image": {
+      "src": "/imgs/kitchen-styles/contemporary.jpg",
+      "alt": "当代风格厨房效果图，石材台面与温暖的分层照明"
+    }
   },
   "introduce": {
     "name": "how-it-works",

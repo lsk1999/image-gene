@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Download, ExternalLink, Heart, ImageIcon, Loader2, Pencil, Sparkles } from "lucide-react";
+import { Download, ExternalLink, Heart, ImageIcon, Pencil, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { KitchenDesignState } from "./data";
 import type { UpdateDesign } from "./selectors";
@@ -12,14 +12,14 @@ type ResultsProps = {
   update: UpdateDesign;
   busy: boolean;
   refining: boolean;
+  readingPhoto: boolean;
   onRefiningChange: (busy: boolean) => void;
   onRefinementSaved: (run: KitchenDesignState["generationHistory"][number], parentId: string) => void;
-  cancel: () => void;
   onError: (message: string) => void;
 };
 
 export function KitchenDesignResults({
-  state, update, busy, refining, onRefiningChange, onRefinementSaved, cancel, onError,
+  state, update, busy, refining, readingPhoto, onRefiningChange, onRefinementSaved, onError,
 }: ResultsProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [downloading, setDownloading] = useState(false);
@@ -116,13 +116,18 @@ export function KitchenDesignResults({
       <div className="flex min-h-[540px] flex-1 flex-col p-3 sm:p-4 lg:min-h-0">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
           {busy ? (
-            <div role="status" className="flex flex-1 flex-col items-center justify-center text-center">
-              <span className="rounded-full bg-white p-4 shadow-sm">
-                <Loader2 className="animate-spin text-primary" size={32} />
-              </span>
-              <h2 className="mt-5 text-xl font-semibold">Creating your kitchen design</h2>
-              <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">Generating one image. This may take a few minutes.</p>
-              <Button className="mt-5" variant="outline" onClick={cancel}>Cancel generation</Button>
+            <div role="status" className="flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-white to-primary/5 px-5 py-10 text-center">
+              <div aria-hidden="true" className="relative grid size-32 place-items-center">
+                <span className="absolute inset-0 rounded-full border border-primary/15" />
+                <span className="absolute inset-3 rounded-full border border-primary/20" />
+                <span className="absolute inset-3 rounded-full border-2 border-transparent border-t-primary/70 motion-safe:animate-[spin_2.4s_linear_infinite]" />
+                <span className="relative grid size-20 place-items-center rounded-2xl border border-primary/15 bg-white text-primary shadow-sm">
+                  <ImageIcon size={32} strokeWidth={1.6} />
+                  <Sparkles size={17} className="absolute right-2 top-2 motion-safe:animate-pulse" />
+                </span>
+              </div>
+              <h2 className="mt-6 text-xl font-semibold">Creating your kitchen design</h2>
+              <p className="mt-2 max-w-sm text-sm leading-6 text-slate-600">We’re preparing your photo and generating one design. This may take a few minutes.</p>
             </div>
           ) : activeResult ? (
             <>
@@ -224,6 +229,7 @@ export function KitchenDesignResults({
                   key={run.id}
                   type="button"
                   onClick={() => restoreHistory(run)}
+                  disabled={busy || readingPhoto}
                   aria-label={`Open ${run.summary}`}
                   aria-pressed={selected}
                   className={`group relative h-24 w-32 shrink-0 overflow-hidden rounded-lg border bg-slate-100 text-left transition-colors sm:w-36 ${selected ? "border-primary ring-1 ring-primary" : "border-slate-200 hover:border-slate-400"}`}
