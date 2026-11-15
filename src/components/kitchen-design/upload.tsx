@@ -2,7 +2,7 @@
 import { useRef, useState } from "react";
 import { UploadCloud, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { type KitchenDesignState } from "./data";
+import { type KitchenDesignState, initialState } from "./data";
 import type { UpdateDesign } from "./selectors";
 
 export function UploadKitchenPhoto({ state, update, onError, reading, onReadingChange, locked }: {
@@ -55,7 +55,16 @@ export function UploadKitchenPhoto({ state, update, onError, reading, onReadingC
                 <Button type="button" size="sm" variant="ghost" aria-label="Remove photo" onClick={() => {
                   ++readVersion.current;
                   onReadingChange(false);
-                  update({ originalImage: null });
+                  // Clear the configuration together with the photo, so a newly
+                  // uploaded photo never inherits the previous photo's settings.
+                  update({
+                    originalImage: null,
+                    keepExistingFurniture: initialState.keepExistingFurniture,
+                    designStyle: initialState.designStyle,
+                    selectedAreas: initialState.selectedAreas,
+                    materialPreferences: initialState.materialPreferences,
+                    customPreferences: initialState.customPreferences,
+                  });
                   onError("");
                 }}><X />Remove</Button>
               </div>
