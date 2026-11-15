@@ -199,7 +199,7 @@ export function KitchenDesignResults({
       <div className="shrink-0 border-t border-slate-200 bg-white px-4 py-3 sm:px-5">
         <div className="mb-2 flex items-center justify-between gap-4">
           <div>
-            <h2 className="text-base font-semibold text-slate-950">Previous Results</h2>
+            <h2 className="text-base font-semibold text-slate-950">Saved results</h2>
           </div>
           {state.generationHistory.length > 0 && (
             <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-500">

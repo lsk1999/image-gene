@@ -310,11 +310,16 @@ export default function KitchenDesignPage() {
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div className="text-base font-semibold text-slate-950">Generate</div>
                 {creditsReady && (
-                  <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium leading-none text-slate-600">
+                  <Link
+                    href="/pricing"
+                    title="Buy more credits"
+                    className="flex shrink-0 items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium leading-none text-slate-600 transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-slate-900"
+                  >
                     <Coins aria-hidden="true" className="size-3.5 text-primary" />
                     <span className="text-sm font-semibold tabular-nums">{leftCredits}</span>
                     <span className="text-slate-400">credits left</span>
-                  </span>
+                    <span aria-hidden="true" className="ml-0.5 font-semibold text-primary">+</span>
+                  </Link>
                 )}
               </div>
               {isAuthEnabled() && authStatus === "unauthenticated" && (
