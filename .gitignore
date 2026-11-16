@@ -26,9 +26,12 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
+.env
 .env.local
 .env.development
 .env.production
+.env.production.local
+.dev.vars*
 
 # vercel
 .vercel
@@ -40,7 +43,6 @@ next-env.d.ts
 
 Makefile
 .wrangler
-wrangler.toml
 supabase
 .*next
 .source

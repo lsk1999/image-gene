@@ -12,13 +12,16 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useAppContext } from "@/contexts/app";
 import { useLocale } from "next-intl";
+import { Link } from "@/i18n/navigation";
 
 export default function Pricing({
   pricing,
   dodoMode,
+  checkoutEnabled = true,
 }: {
   pricing: PricingType;
   dodoMode?: "test" | "live";
+  checkoutEnabled?: boolean;
 }) {
   if (pricing.disabled) {
     return null;
@@ -110,7 +113,15 @@ export default function Pricing({
           <p className="mt-5 text-slate-600 lg:text-lg">
             {pricing.description}
           </p>
-          {dodoMode === "test" && (
+          {!checkoutEnabled && (
+            <p className="mt-4 text-sm font-medium text-slate-700">
+              {locale === "zh" ? "积分购买暂未开放。" : "Credit purchases are temporarily unavailable."}{" "}
+              <Link href="/ai-kitchen-design" className="underline underline-offset-4">
+                {locale === "zh" ? "免费试用厨房设计工具" : "Try the kitchen designer for free"}
+              </Link>
+            </p>
+          )}
+          {checkoutEnabled && dodoMode === "test" && (
             <p role="status" className="mt-4 text-sm font-medium text-slate-700">
               {locale === "zh" ? "测试结账，仅使用测试卡。" : "Test checkout. Use a test card only."}
             </p>
@@ -231,7 +242,7 @@ export default function Pricing({
                       )}
                     </div>
                     <div className="flex flex-col gap-2">
-                      {!dodoMode && item.cn_amount && item.cn_amount > 0 ? (
+                      {checkoutEnabled && !dodoMode && item.cn_amount && item.cn_amount > 0 ? (
                         <button
                             type="button"
                             className="mt-2 flex h-12 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition-colors hover:border-primary/30 hover:bg-primary/5"
@@ -251,7 +262,7 @@ export default function Pricing({
                             />
                         </button>
                       ) : null}
-                      {item.button && (
+                      {checkoutEnabled && item.button && (
                         <Button
                           className="flex h-12 w-full items-center justify-center gap-2 rounded-xl font-semibold"
                           disabled={isLoading}
