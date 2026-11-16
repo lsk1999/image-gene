@@ -7,6 +7,10 @@ const predictionSchema = z.object({
   output: z.unknown().optional(),
 });
 const API = "https://api.replicate.com/v1";
+// Outside Workers, keep a narrow fallback because Node fetch can reach private networks.
+const SIGNED_OUTPUT_HOST = "ai-gateway-outputs.0d37909e38d3e99c29fa2cd343ac421a.r2.cloudflarestorage.com";
+const SIGNED_OUTPUT_PREFIX = "/provider-outputs/";
+const DNS_HOSTNAME = /^(?:[a-z0-9-]+\.)+[a-z][a-z0-9-]*$/i;
 const OUTPUT_LIMIT = 30 * 1024 * 1024;
 const DEFAULT_MODEL = "google/nano-banana-2.1";
 const KONTEXT_MODELS = [
@@ -93,12 +97,33 @@ export function kitchenReplicate() {
         succeeded = true;
         const output = typeof prediction.output === "string" ? prediction.output : Array.isArray(prediction.output) ? prediction.output[0] : null;
         if (typeof output !== "string") throw new Error("Replicate returned no image.");
-        const url = new URL(output);
-        if (url.protocol !== "https:" || url.username || url.password || url.port || !(url.hostname === "replicate.delivery" || url.hostname.endsWith(".replicate.delivery"))) {
+        let url: URL;
+        try {
+          url = new URL(output);
+        } catch {
+          throw new Error("Replicate returned a malformed image URL.");
+        }
+        if (url.protocol !== "https:" || url.username || url.password || url.port || url.hash) {
           throw new Error("Replicate returned an unsupported image URL.");
         }
-        // Do not forward the API token to redirects or arbitrary output hosts.
-        const image = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, signal, redirect: "manual" });
+        const isDeliveryHost = url.hostname === "replicate.delivery" || url.hostname.endsWith(".replicate.delivery");
+        // wrangler.toml enables global_fetch_strictly_public for these external downloads.
+        const hasPublicEgress = globalThis.navigator?.userAgent === "Cloudflare-Workers";
+        const isKnownSignedOutput = url.hostname === SIGNED_OUTPUT_HOST
+          && url.pathname.startsWith(SIGNED_OUTPUT_PREFIX)
+          && url.pathname.length > SIGNED_OUTPUT_PREFIX.length
+          && url.searchParams.get("X-Amz-Algorithm") === "AWS4-HMAC-SHA256"
+          && /^[0-9a-f]{64}$/i.test(url.searchParams.get("X-Amz-Signature") ?? "");
+        if (!DNS_HOSTNAME.test(url.hostname) || (!hasPublicEgress && !isDeliveryHost && !isKnownSignedOutput)) {
+          throw new Error(`Replicate returned an unsupported image URL (host: ${url.hostname}).`);
+        }
+
+        // Only Replicate's delivery hosts receive its token. Other hosts use their returned URL as-is.
+        const image = await fetch(url, {
+          headers: isDeliveryHost ? { Authorization: `Bearer ${token}` } : undefined,
+          signal,
+          redirect: "manual",
+        });
         if (!image.ok || !image.body) {
           await image.body?.cancel().catch(() => undefined);
           throw new Error(`Replicate image download failed (${image.status}).`);
