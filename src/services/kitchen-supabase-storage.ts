@@ -47,6 +47,7 @@ function encodeObjectPath(bucket: string, key: string) {
 }
 
 async function requireSuccess(response: Response, operation: string) {
+  // Workers supports manual redirects. Reject non-2xx responses without following them.
   if (!response.ok) {
     await response.body?.cancel().catch(() => undefined);
     throw new Error(`Supabase Storage ${operation} failed (${response.status}).`);
@@ -69,7 +70,7 @@ export function kitchenStorage() {
           "x-upsert": "false",
         },
         body: new Uint8Array(body).buffer,
-        redirect: "error",
+        redirect: "manual",
         signal: AbortSignal.timeout(60_000),
       });
       await requireSuccess(response, "upload");
@@ -82,7 +83,7 @@ export function kitchenStorage() {
         await fetch(`${storageUrl}/object/${path}`, {
           headers,
           cache: "no-store",
-          redirect: "error",
+          redirect: "manual",
           signal: AbortSignal.timeout(60_000),
         }),
         "download"
@@ -99,7 +100,7 @@ export function kitchenStorage() {
           method: "POST",
           headers: { ...headers, "Content-Type": "application/json" },
           body: JSON.stringify({ expiresIn }),
-          redirect: "error",
+          redirect: "manual",
           signal: AbortSignal.timeout(15_000),
         }),
         "URL signing"

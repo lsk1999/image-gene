@@ -98,8 +98,11 @@ export function kitchenReplicate() {
           throw new Error("Replicate returned an unsupported image URL.");
         }
         // Do not forward the API token to redirects or arbitrary output hosts.
-        const image = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, signal, redirect: "error" });
-        if (!image.ok || !image.body) throw new Error("Replicate image download failed.");
+        const image = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, signal, redirect: "manual" });
+        if (!image.ok || !image.body) {
+          await image.body?.cancel().catch(() => undefined);
+          throw new Error(`Replicate image download failed (${image.status}).`);
+        }
         if (Number(image.headers.get("content-length")) > OUTPUT_LIMIT) throw new Error("Generated image is too large.");
         const reader = image.body.getReader();
         const chunks: Uint8Array[] = [];
