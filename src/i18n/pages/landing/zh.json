@@ -113,16 +113,15 @@
           { "title": "首页", "url": "/", "target": "_self" },
           { "title": "厨房设计工具", "url": "/ai-kitchen-design", "target": "_self" },
           { "title": "价格", "url": "/pricing", "target": "_self" }
-        ] },
-        { "title": "协议", "children": [
-          { "title": "隐私政策", "url": "/privacy-policy", "target": "_self" },
-          { "title": "服务条款", "url": "/terms-of-service", "target": "_self" }
         ] }
       ]
     },
+    "agreementTitle": "协议",
+    "support": { "title": "联系我们", "email": "support@aidesignkitchen.com" },
     "agreement": { "items": [
       { "title": "隐私政策", "url": "/privacy-policy" },
-      { "title": "服务条款", "url": "/terms-of-service" }
+      { "title": "服务条款", "url": "/terms-of-service" },
+      { "title": "退款与取消政策", "url": "/refund-policy" }
     ] }
   }
 }

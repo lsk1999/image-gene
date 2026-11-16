@@ -8,4 +8,6 @@ export interface Footer {
   copyright?: string;
   social?: Social;
   agreement?: Agreement;
+  agreementTitle?: string;
+  support?: { title: string; email: string };
 }

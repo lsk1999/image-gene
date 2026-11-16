@@ -113,16 +113,15 @@
           { "title": "Home", "url": "/", "target": "_self" },
           { "title": "Kitchen Designer", "url": "/ai-kitchen-design", "target": "_self" },
           { "title": "Pricing", "url": "/pricing", "target": "_self" }
-        ] },
-        { "title": "Legal", "children": [
-          { "title": "Privacy Policy", "url": "/privacy-policy", "target": "_self" },
-          { "title": "Terms of Service", "url": "/terms-of-service", "target": "_self" }
         ] }
       ]
     },
+    "agreementTitle": "Policies",
+    "support": { "title": "Contact Support", "email": "support@aidesignkitchen.com" },
     "agreement": { "items": [
       { "title": "Privacy Policy", "url": "/privacy-policy" },
-      { "title": "Terms of Service", "url": "/terms-of-service" }
+      { "title": "Terms of Service", "url": "/terms-of-service" },
+      { "title": "Refund and Cancellation Policy", "url": "/refund-policy" }
     ] }
   }
 }

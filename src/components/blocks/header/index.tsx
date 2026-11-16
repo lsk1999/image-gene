@@ -18,12 +18,12 @@ function Brand({ header, compact = false }: { header: HeaderType; compact?: bool
       {header.brand?.logo?.src ? (
         <img src={header.brand.logo.src} alt={header.brand.logo.alt || header.brand.title} className="size-11 rounded-xl object-cover" />
       ) : (
-        <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm shadow-primary/20 transition-transform group-hover:-rotate-3">
+        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
           <Sparkles className="size-5" aria-hidden="true" />
         </span>
       )}
       {header.brand?.title && (
-        <span className={`${compact ? "text-lg" : "text-xl xl:text-2xl"} truncate font-semibold tracking-[-0.03em] text-slate-950`}>
+        <span className={`${compact ? "text-base sm:text-lg" : "text-xl"} truncate font-semibold tracking-[-0.03em] text-slate-950`}>
           {header.brand.title}
         </span>
       )}
@@ -46,12 +46,12 @@ export default function Header({ header }: { header: HeaderType }) {
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 shadow-[0_1px_0_rgba(15,23,42,0.02)] backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
       <div className="container">
         <nav className="hidden min-h-24 items-center justify-between gap-8 lg:flex" aria-label="Main navigation">
-          <div className="flex min-w-0 items-center gap-10 xl:gap-14">
+          <div className="flex min-w-0 items-center gap-7 xl:gap-12">
             <Brand header={header} />
-            <div className="flex items-center gap-7 xl:gap-9">
+            <div className="flex shrink-0 items-center gap-1 rounded-2xl border border-slate-200/80 bg-slate-50 p-1">
               {header.nav?.items?.map((item) => {
                 const active = isActive(item.url);
                 return (
@@ -60,7 +60,7 @@ export default function Header({ header }: { header: HeaderType }) {
                     href={item.url as any}
                     target={item.target}
                     aria-current={active ? "page" : undefined}
-                    className={`group relative flex items-center gap-2 py-2.5 text-sm font-medium transition-colors ${active ? "text-slate-950" : "text-slate-500 hover:text-slate-950"}`}
+                    className={`group flex items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2.5 text-sm font-medium transition-colors xl:px-4 ${active ? "bg-white text-slate-950 shadow-sm ring-1 ring-slate-200" : "text-slate-600 hover:bg-white hover:text-slate-950"}`}
                   >
                     {item.icon && (
                       <Icon
@@ -69,10 +69,6 @@ export default function Header({ header }: { header: HeaderType }) {
                       />
                     )}
                     <span>{item.title}</span>
-                    <span
-                      aria-hidden="true"
-                      className={`absolute inset-x-0 -bottom-0.5 h-0.5 origin-left rounded-full bg-primary transition-transform duration-300 ${active ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`}
-                    />
                   </Link>
                 );
               })}
@@ -95,13 +91,13 @@ export default function Header({ header }: { header: HeaderType }) {
           </div>
         </nav>
 
-        <div className="flex min-h-20 items-center justify-between gap-4 lg:hidden">
+        <div className="flex min-h-20 items-center justify-between gap-2 sm:gap-4 lg:hidden">
           <Brand header={header} compact />
           <div className="flex shrink-0 items-center gap-2">
             <CreditsDisplay />
             <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="outline" size="icon" className="size-11 rounded-xl" aria-label="Open navigation">
+                <Button variant="outline" size="icon" className="size-11 rounded-xl bg-slate-50 text-slate-900" aria-label="Open navigation">
                   <Menu className="size-5" />
                 </Button>
               </SheetTrigger>
