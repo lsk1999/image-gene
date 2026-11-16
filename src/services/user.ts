@@ -3,7 +3,7 @@ import { findUserByUuid } from "@/models/user";
 
 import { User } from "@/types/user";
 import { auth } from "@/auth";
-import { getOneYearLaterTimestr } from "@/lib/time";
+import { addCalendarMonths } from "@/lib/time";
 import { getUserUuidByApiKey } from "@/models/apikey";
 import { headers } from "next/headers";
 import { credits, users } from "@/db/schema";
@@ -24,13 +24,14 @@ export async function saveUser(user: User) {
       if (existing) return existing as unknown as User;
 
       const [created] = await tx.insert(users).values({ ...user, uuid: user.uuid || getUuid() } as typeof users.$inferInsert).returning();
+      const grantedAt = new Date();
       await tx.insert(credits).values({
         trans_no: `trial:${created.uuid}`,
         user_uuid: created.uuid,
         trans_type: CreditsTransType.NewUser,
         credits: CreditsAmount.NewUserGet,
-        created_at: new Date(),
-        expired_at: new Date(getOneYearLaterTimestr()),
+        created_at: grantedAt,
+        expired_at: addCalendarMonths(grantedAt, 1),
         order_no: "",
       });
       return created as unknown as User;

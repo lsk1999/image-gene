@@ -5,15 +5,18 @@ import { respData, respErr } from "@/lib/resp";
 import Stripe from "stripe";
 import { findUserByUuid } from "@/models/user";
 import { getSnowId } from "@/lib/hash";
+import { addCalendarMonths } from "@/lib/time";
 import { getPricingPage } from "@/services/page";
 import { PricingItem } from "@/types/blocks/pricing";
 import { newStripeClient } from "@/integrations/stripe";
 import { Order } from "@/types/order";
 import { newCreemClient } from "@/integrations/creem";
+import { createDodoCheckout } from "@/services/dodo-payment";
 
 export async function POST(req: Request) {
   try {
     let { product_id, currency, locale } = await req.json();
+    const provider = process.env.PAY_PROVIDER || "stripe";
 
     let cancel_url = `${
       process.env.NEXT_PUBLIC_PAY_CANCEL_URL || process.env.NEXT_PUBLIC_WEB_URL
@@ -65,6 +68,9 @@ export async function POST(req: Request) {
     }
 
     const is_subscription = interval === "month" || interval === "year";
+    if (provider === "dodo" && (is_subscription || currency !== item.currency)) {
+      return respErr("This checkout supports one-time purchases in the listed currency.");
+    }
 
     // get signed user
     const user_uuid = await getUserUuid();
@@ -91,7 +97,9 @@ export async function POST(req: Request) {
 
     // calculate expired_at
     let expired_at = "";
-    if (valid_months && valid_months > 0) {
+    if (!is_subscription && valid_months && valid_months > 0) {
+      expired_at = addCalendarMonths(currentDate, valid_months).toISOString();
+    } else if (valid_months && valid_months > 0) {
       const timePeriod = new Date(currentDate);
       timePeriod.setMonth(currentDate.getMonth() + valid_months);
 
@@ -125,9 +133,11 @@ export async function POST(req: Request) {
       product_name: product_name,
       valid_months: valid_months,
     };
-    await insertOrder(order);
+    const savedOrder = await insertOrder(order);
 
-    const provider = process.env.PAY_PROVIDER || "stripe";
+    if (provider === "dodo") {
+      return respData(await createDodoCheckout(savedOrder, locale));
+    }
 
     if (provider === "creem") {
       // checkout with creem
@@ -150,6 +160,9 @@ export async function POST(req: Request) {
     return respData(result);
   } catch (e: any) {
     console.log("checkout failed: ", e);
+    if (process.env.PAY_PROVIDER === "dodo") {
+      return respErr("Could not start checkout. Please try again later.");
+    }
     return respErr("checkout failed: " + e.message);
   }
 }

@@ -14,10 +14,11 @@ export const getMillisecond = () => {
   return time;
 };
 
-export const getOneYearLaterTimestr = () => {
-  const currentDate = new Date();
-  const oneYearLater = new Date(currentDate);
-  oneYearLater.setFullYear(currentDate.getFullYear() + 1);
-
-  return oneYearLater.toISOString();
-};
+export function addCalendarMonths(date: Date, months: number): Date {
+  const result = new Date(date);
+  const day = result.getUTCDate();
+  result.setUTCDate(1);
+  result.setUTCMonth(result.getUTCMonth() + months + 1, 0);
+  result.setUTCDate(Math.min(day, result.getUTCDate()));
+  return result;
+}

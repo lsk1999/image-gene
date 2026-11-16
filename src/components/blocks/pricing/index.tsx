@@ -13,7 +13,13 @@ import { toast } from "sonner";
 import { useAppContext } from "@/contexts/app";
 import { useLocale } from "next-intl";
 
-export default function Pricing({ pricing }: { pricing: PricingType }) {
+export default function Pricing({
+  pricing,
+  dodoMode,
+}: {
+  pricing: PricingType;
+  dodoMode?: "test" | "live";
+}) {
   if (pricing.disabled) {
     return null;
   }
@@ -104,6 +110,11 @@ export default function Pricing({ pricing }: { pricing: PricingType }) {
           <p className="mt-5 text-slate-600 lg:text-lg">
             {pricing.description}
           </p>
+          {dodoMode === "test" && (
+            <p role="status" className="mt-4 text-sm font-medium text-slate-700">
+              {locale === "zh" ? "测试结账，仅使用测试卡。" : "Test checkout. Use a test card only."}
+            </p>
+          )}
         </div>
         <div className="w-full flex flex-col items-center gap-1">
           {pricing.groups && pricing.groups.length > 1 && (
@@ -220,7 +231,7 @@ export default function Pricing({ pricing }: { pricing: PricingType }) {
                       )}
                     </div>
                     <div className="flex flex-col gap-2">
-                      {item.cn_amount && item.cn_amount > 0 ? (
+                      {!dodoMode && item.cn_amount && item.cn_amount > 0 ? (
                         <button
                             type="button"
                             className="mt-2 flex h-12 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition-colors hover:border-primary/30 hover:bg-primary/5"
