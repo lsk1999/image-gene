@@ -51,7 +51,7 @@ export default function Header({ header }: { header: HeaderType }) {
         <nav className="hidden min-h-24 items-center justify-between gap-8 lg:flex" aria-label="Main navigation">
           <div className="flex min-w-0 items-center gap-7 xl:gap-12">
             <Brand header={header} />
-            <div className="flex shrink-0 items-center gap-1 rounded-2xl border border-slate-200/80 bg-slate-50 p-1">
+            <div className="flex shrink-0 items-center gap-1 xl:gap-2">
               {header.nav?.items?.map((item) => {
                 const active = isActive(item.url);
                 return (
@@ -60,7 +60,7 @@ export default function Header({ header }: { header: HeaderType }) {
                     href={item.url as any}
                     target={item.target}
                     aria-current={active ? "page" : undefined}
-                    className={`group flex items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2.5 text-sm font-medium transition-colors xl:px-4 ${active ? "bg-white text-slate-950 shadow-sm ring-1 ring-slate-200" : "text-slate-600 hover:bg-white hover:text-slate-950"}`}
+                    className={`group relative flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary xl:px-4 ${active ? "text-primary after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary/60 xl:after:inset-x-4" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"}`}
                   >
                     {item.icon && (
                       <Icon

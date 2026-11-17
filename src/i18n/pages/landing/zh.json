@@ -6,8 +6,8 @@
     "nav": {
       "items": [
         { "title": "使用流程", "url": "/#how-it-works", "icon": "RiPlayCircleLine" },
-        { "title": "厨房设计工具", "url": "/ai-kitchen-design", "icon": "RiSparkling2Line" },
-        { "title": "价格", "url": "/pricing", "icon": "RiMoneyDollarCircleLine" }
+        { "title": "价格", "url": "/pricing", "icon": "RiMoneyDollarCircleLine" },
+        { "title": "厨房设计工具", "url": "/ai-kitchen-design", "icon": "RiSparkling2Line" }
       ]
     },
     "show_sign": true,

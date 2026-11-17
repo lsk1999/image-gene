@@ -6,8 +6,8 @@
     "nav": {
       "items": [
         { "title": "How it works", "url": "/#how-it-works", "icon": "RiPlayCircleLine" },
-        { "title": "Kitchen Designer", "url": "/ai-kitchen-design", "icon": "RiSparkling2Line" },
-        { "title": "Pricing", "url": "/pricing", "icon": "RiMoneyDollarCircleLine" }
+        { "title": "Pricing", "url": "/pricing", "icon": "RiMoneyDollarCircleLine" },
+        { "title": "Kitchen Designer", "url": "/ai-kitchen-design", "icon": "RiSparkling2Line" }
       ]
     },
     "show_sign": true,
