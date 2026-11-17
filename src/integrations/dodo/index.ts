@@ -37,7 +37,7 @@ export function dodoClient() {
       },
       body: body ? JSON.stringify(body) : undefined,
       cache: "no-store",
-      redirect: "error",
+      redirect: "manual",
       signal: AbortSignal.timeout(15_000),
     });
     if (!response.ok) throw new Error(`Dodo API request failed (${response.status})`);

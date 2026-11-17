@@ -392,7 +392,7 @@ export default function KitchenDesignPage() {
             AI Kitchen Design
           </h1>
           <p className="mt-4 text-sm leading-7 text-slate-500 sm:text-base">
-            Remodel your kitchen with AI. Upload a photo, choose a style and materials, and preview your dream kitchen in seconds.
+            Upload a kitchen photo, choose a style and materials, and generate an AI concept for your space.
           </p>
         </div>
       </div>
