@@ -82,14 +82,14 @@ Node.js 和 pnpm 直接使用 Workers Builds 的默认版本。Cloudflare 会根
 
 ## 5. Dodo 审核与正式支付
 
-公开站默认 `PAY_PROVIDER=dodo`、`DODO_MODE=test`、`CHECKOUT_ENABLED=false`。价格、协议和免费试用公开。可以继续用本地或独立测试环境验证 Dodo 测试支付与发积分。
+公开站默认 `PAY_PROVIDER=dodo`、`DODO_MODE=test`。价格、协议和免费试用公开。结账开关 `CHECKOUT_ENABLED` 在 Cloudflare Worker 的 Runtime variables and secrets 中管理，值为 `true` 时开放购买，未设置时关闭。可以继续用本地或独立测试环境验证 Dodo 测试支付与发积分。
 
 正式收款获批后：
 
 1. 在 Dodo 正式模式建立或复制三个一次性 USD 商品，确保价格分别是 $9.90、$19.90、$29.90，分别对应 50、120、200 积分。关闭与固定标价冲突的折扣和自动换币，分别核对含税价或额外税费。
 2. 在正式模式创建 Webhook，地址为 `https://aidesignkitchen.com/api/pay/notify/dodo`，订阅 `payment.succeeded`。
 3. 在 Worker 中配置 `DODO_PAYMENTS_API_KEY` 和 `DODO_WEBHOOK_SECRET` 为 Secret，分别填正式 API Key 与这个端点的 Signing Secret。`DODO_PRODUCTS` 在后台按 **Text** 填单行 JSON，如 `{"starter":"pdt_实际ID","standard":"pdt_实际ID","premium":"pdt_实际ID"}`。
-4. 将 `wrangler.toml` 里的 `DODO_MODE` 改为 `live`，`CHECKOUT_ENABLED` 改为 `true`，重新部署。核对正式结账币种、订单回跳和积分到账。
+4. 将 `wrangler.toml` 里的 `DODO_MODE` 改为 `live` 并重新部署，再在 Cloudflare Worker 的运行时变量中将 `CHECKOUT_ENABLED` 设为 `true` 并部署。核对正式结账币种、订单回跳和积分到账。
 
 [Dodo 账户验证](https://docs.dodopayments.com/miscellaneous/verification-process)
 

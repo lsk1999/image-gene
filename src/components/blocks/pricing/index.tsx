@@ -3,7 +3,7 @@
 import { Check, Loader } from "lucide-react";
 import { PricingItem, Pricing as PricingType } from "@/types/blocks/pricing";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useEffect, useState } from "react";
+import { useId, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,8 +39,15 @@ export default function Pricing({
   });
   const [isLoading, setIsLoading] = useState(false);
   const [productId, setProductId] = useState<string | null>(null);
+  const [selectedPackId, setSelectedPackId] = useState<string>();
+  const packGroupName = useId();
+  const visiblePacks = pricing.items?.filter((item) => !item.group || item.group === group) ?? [];
+  const selectedPack = visiblePacks.find((item) => item.product_id === selectedPackId)
+    ?? visiblePacks.find((item) => item.is_featured)
+    ?? visiblePacks[0];
 
   const handleCheckout = async (item: PricingItem, cn_pay: boolean = false) => {
+    setSelectedPackId(item.product_id);
     try {
       if (!user) {
         setShowSignModal(true);
@@ -94,14 +101,6 @@ export default function Pricing({
       setProductId(null);
     }
   };
-
-  useEffect(() => {
-    if (pricing.items) {
-      const featuredItem = pricing.items.find((i) => i.is_featured);
-      setProductId(featuredItem?.product_id || pricing.items[0]?.product_id);
-      setIsLoading(false);
-    }
-  }, [pricing.items]);
 
   return (
     <section id={pricing.name} className="bg-[#f7f8f4] py-20 sm:py-24">
@@ -169,20 +168,32 @@ export default function Pricing({
             </div>
           )}
           <div className="mt-0 grid w-full max-w-6xl gap-5 md:grid-cols-3">
-            {pricing.items?.map((item, index) => {
-              if (item.group && item.group !== group) {
-                return null;
-              }
+            {visiblePacks.map((item, index) => {
+              const selected = item === selectedPack;
+              const packInputId = `${packGroupName}-${index}`;
 
               return (
                 <div
-                  key={index}
-                  className={`relative rounded-2xl bg-white p-7 shadow-sm transition-transform hover:-translate-y-1 ${
-                    item.is_featured
-                      ? "border-2 border-primary shadow-lg shadow-primary/10"
-                      : "border border-slate-200"
+                  key={item.product_id}
+                  className={`relative rounded-2xl border bg-white p-7 transition-shadow ${
+                    selected
+                      ? "border-primary shadow-lg shadow-primary/10 ring-1 ring-primary"
+                      : "border-slate-200 shadow-sm"
                   }`}
                 >
+                  <input
+                    id={packInputId}
+                    type="radio"
+                    name={packGroupName}
+                    checked={selected}
+                    aria-label={item.title || item.product_id}
+                    onChange={() => setSelectedPackId(item.product_id)}
+                    className="peer sr-only"
+                  />
+                  <label
+                    htmlFor={packInputId}
+                    className="absolute inset-0 cursor-pointer rounded-2xl peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-primary"
+                  />
                   <div className="flex h-full flex-col justify-between gap-5">
                     <div>
                       <div className="flex items-center gap-2 mb-4">
@@ -245,7 +256,7 @@ export default function Pricing({
                       {checkoutEnabled && !dodoMode && item.cn_amount && item.cn_amount > 0 ? (
                         <button
                             type="button"
-                            className="mt-2 flex h-12 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition-colors hover:border-primary/30 hover:bg-primary/5"
+                            className="relative z-10 mt-2 flex h-12 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition-colors hover:border-primary/30 hover:bg-primary/5"
                             disabled={isLoading}
                             onClick={() => {
                               if (isLoading) {
@@ -264,7 +275,7 @@ export default function Pricing({
                       ) : null}
                       {checkoutEnabled && item.button && (
                         <Button
-                          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl font-semibold"
+                          className="relative z-10 flex h-12 w-full items-center justify-center gap-2 rounded-xl font-semibold"
                           disabled={isLoading}
                           onClick={() => {
                             if (isLoading) {

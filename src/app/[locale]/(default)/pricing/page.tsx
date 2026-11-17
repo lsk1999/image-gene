@@ -13,7 +13,7 @@ export default async function PricingPage({
   const page = await getPricingPage(locale);
   const mode = process.env.PAY_PROVIDER === "dodo" ? dodoMode() : undefined;
 
-  const checkoutEnabled = process.env.CHECKOUT_ENABLED !== "false";
+  const checkoutEnabled = process.env.CHECKOUT_ENABLED === "true";
 
   return page.pricing ? (
     <Pricing pricing={page.pricing} dodoMode={mode} checkoutEnabled={checkoutEnabled} />

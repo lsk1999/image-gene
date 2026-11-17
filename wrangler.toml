@@ -22,4 +22,4 @@ KITCHEN_REPLICATE_MODEL = "google/nano-banana-2.1"
 SUPABASE_STORAGE_BUCKET = "kitchen-design"
 PAY_PROVIDER = "dodo"
 DODO_MODE = "test"
-CHECKOUT_ENABLED = "false"
+# Configure CHECKOUT_ENABLED in the Worker's runtime variables.

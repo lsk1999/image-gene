@@ -14,7 +14,7 @@ import { newCreemClient } from "@/integrations/creem";
 import { createDodoCheckout } from "@/services/dodo-payment";
 
 export async function POST(req: Request) {
-  if (process.env.CHECKOUT_ENABLED === "false") {
+  if (process.env.CHECKOUT_ENABLED !== "true") {
     return Response.json(
       { code: -1, message: "Credit purchases are temporarily unavailable." },
       { status: 503 },
