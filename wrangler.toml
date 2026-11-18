@@ -21,5 +21,5 @@ AUTH_TRUST_HOST = "true"
 KITCHEN_REPLICATE_MODEL = "google/nano-banana-2.1"
 SUPABASE_STORAGE_BUCKET = "kitchen-design"
 PAY_PROVIDER = "dodo"
-DODO_MODE = "test"
-# Configure CHECKOUT_ENABLED in the Worker's runtime variables.
+# Configure DODO_MODE, CHECKOUT_ENABLED and DODO_PRODUCTS in the Worker's runtime variables.
+# Store DODO_PAYMENTS_API_KEY and DODO_WEBHOOK_SECRET as Worker secrets.
