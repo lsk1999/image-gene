@@ -36,6 +36,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
   const [showFeedback, setShowFeedback] = useState<boolean>(false);
+  // SessionProvider may have a cached client session that is absent during SSR.
+  // Give consumers the same initial auth snapshot on both sides.
+  const [authMounted, setAuthMounted] = useState(false);
+  useEffect(() => setAuthMounted(true), []);
 
   const fetchUserInfo = async function (uuid: string, signal: AbortSignal) {
     try {
@@ -138,8 +142,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         setShowSignModal,
         user: userId && user?.uuid === userId ? user : null,
         setUser,
-        authStatus,
-        sessionUser,
+        authStatus: authMounted ? authStatus : "loading",
+        sessionUser: authMounted ? sessionUser : undefined,
         showFeedback,
         setShowFeedback,
       }}

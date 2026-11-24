@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Menu, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -34,6 +34,8 @@ function Brand({ header, compact = false }: { header: HeaderType; compact?: bool
 export default function Header({ header }: { header: HeaderType }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuMounted, setMenuMounted] = useState(false);
+  useEffect(() => setMenuMounted(true), []);
 
   if (header.disabled) return null;
 
@@ -95,7 +97,7 @@ export default function Header({ header }: { header: HeaderType }) {
           <Brand header={header} compact />
           <div className="flex shrink-0 items-center gap-2">
             <CreditsDisplay />
-            <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+            {menuMounted ? <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="outline" size="icon" className="size-11 rounded-xl bg-slate-50 text-slate-900" aria-label="Open navigation">
                   <Menu className="size-5" />
@@ -132,7 +134,11 @@ export default function Header({ header }: { header: HeaderType }) {
                   </div>
                 </div>
               </SheetContent>
-            </Sheet>
+            </Sheet> : (
+              <Button variant="outline" size="icon" className="size-11 rounded-xl bg-slate-50 text-slate-900" aria-label="Open navigation" disabled>
+                <Menu className="size-5" />
+              </Button>
+            )}
           </div>
         </div>
       </div>

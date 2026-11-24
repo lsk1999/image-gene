@@ -5,6 +5,7 @@ import { Download, ImageIcon, Pencil, Sparkles } from "lucide-react";
 import type { KitchenDesignState } from "./data";
 import type { UpdateDesign } from "./selectors";
 import { RefineDialog } from "./refine-dialog";
+import { useAppContext } from "@/contexts/app";
 
 type ResultsProps = {
   state: KitchenDesignState;
@@ -21,6 +22,10 @@ type ResultsProps = {
 export function KitchenDesignResults({
   state, update, busy, refining, readingPhoto, onRefiningChange, onRefinementSaved, onError, onAccessRequired,
 }: ResultsProps) {
+  const { authStatus, sessionUser } = useAppContext();
+  const historyUserId = authStatus === "authenticated" ? sessionUser?.uuid : undefined;
+  const [historyDenied, setHistoryDenied] = useState(false);
+  const canShowHistory = Boolean(historyUserId) && !historyDenied;
   const [activeIndex, setActiveIndex] = useState(0);
   const [downloading, setDownloading] = useState(false);
   const [historyError, setHistoryError] = useState("");
@@ -34,17 +39,33 @@ export function KitchenDesignResults({
   const editButton = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
+    if (!historyUserId) {
+      setNextCursor(null);
+      setHistoryLoading(false);
+      setHistoryError("");
+      setHistoryDenied(false);
+      setEditorOpen(false);
+      setEditResult(undefined);
+      update({ generationHistory: [], generationResults: [], favoriteId: null });
+      return;
+    }
     if (busy || refining) return;
 
     const abort = new AbortController();
     historyRequest.current = abort;
     setHistoryLoading(true);
     setHistoryError("");
+    setHistoryDenied(false);
     setNextCursor(null);
     fetch("/api/kitchen-design/history", { signal: abort.signal, cache: "no-store" })
       .then(async (response) => {
         const payload = await response.json();
         if (abort.signal.aborted) return;
+        if (response.status === 401) {
+          setHistoryDenied(true);
+          update({ generationHistory: [], generationResults: [], favoriteId: null });
+          return;
+        }
         if (!response.ok || payload.code !== 0) {
           throw new Error(payload.message || "Could not load saved designs.");
         }
@@ -68,10 +89,10 @@ export function KitchenDesignResults({
       historyRequest.current?.abort();
       historyRequest.current = null;
     };
-  }, [busy, refining, update, historyReload]);
+  }, [busy, refining, update, historyReload, historyUserId]);
 
   async function loadMoreHistory() {
-    if (!nextCursor || historyRequest.current || busy || refining) return;
+    if (!canShowHistory || !nextCursor || historyRequest.current || busy || refining) return;
     const abort = new AbortController();
     historyRequest.current = abort;
     setHistoryLoading(true);
@@ -82,6 +103,12 @@ export function KitchenDesignResults({
       });
       const payload = await response.json();
       if (abort.signal.aborted) return;
+      if (response.status === 401) {
+        setHistoryDenied(true);
+        setNextCursor(null);
+        update({ generationHistory: [], generationResults: [], favoriteId: null });
+        return;
+      }
       if (!response.ok || payload.code !== 0) {
         // An invalid/deleted cursor needs a first-page refresh, not the same cursor again.
         if (response.status === 400) setNextCursor(null);
@@ -143,7 +170,7 @@ export function KitchenDesignResults({
     onRefinementSaved(run, parentId);
   }
 
-  const historyControl = (nextCursor || historyError || historyLoading) ? (
+  const historyControl = canShowHistory && (nextCursor || historyError || historyLoading) ? (
     <button type="button"
       disabled={historyLoading || busy || refining}
       onClick={() => nextCursor ? void loadMoreHistory() : setHistoryReload(value => value + 1)}
@@ -258,14 +285,18 @@ export function KitchenDesignResults({
           <div>
             <h2 className="text-base font-semibold text-slate-950">Saved results</h2>
           </div>
-          {state.generationHistory.length > 0 && (
+          {canShowHistory && state.generationHistory.length > 0 && (
             <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-500">
               {state.generationHistory.length} loaded
             </span>
           )}
         </div>
 
-        {historyError && state.generationHistory.length === 0 ? (
+        {!canShowHistory ? (
+          <p className="flex h-24 items-center text-sm text-slate-500">
+            {authStatus === "loading" ? "Checking sign-in status…" : "Sign in to view your saved designs."}
+          </p>
+        ) : historyError && state.generationHistory.length === 0 ? (
           <p role="alert" className="flex h-24 items-center text-sm text-slate-500">{historyError}</p>
         ) : state.generationHistory.length > 0 ? (
           <div className="flex gap-2.5 overflow-x-auto pb-1">
@@ -303,7 +334,7 @@ export function KitchenDesignResults({
             <ImageIcon size={20} /> <span>Generated results will appear here.</span>
           </div>
         )}
-        {historyError && state.generationHistory.length > 0 && (
+        {canShowHistory && historyError && state.generationHistory.length > 0 && (
           <p role="alert" className="mt-2 text-xs text-red-600">{historyError}</p>
         )}
         {state.generationHistory.length === 0 && historyControl}
