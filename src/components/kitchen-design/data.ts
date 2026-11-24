@@ -1,4 +1,5 @@
 export const KITCHEN_DESIGN_CREDIT_COST = 1;
+export const KITCHEN_HISTORY_LIMIT = 10;
 
 export const styles = [
   { name: "Modern", description: "Rooted in 20th-century modernism: simple geometric forms, little applied ornament, flat surfaces, and functional layouts.", image: "/imgs/kitchen-styles/modern.png", alt: "Bright modern kitchen with streamlined cabinetry, neutral finishes, and abundant natural light" },

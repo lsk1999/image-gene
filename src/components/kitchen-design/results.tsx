@@ -24,6 +24,10 @@ export function KitchenDesignResults({
   const [activeIndex, setActiveIndex] = useState(0);
   const [downloading, setDownloading] = useState(false);
   const [historyError, setHistoryError] = useState("");
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [historyReload, setHistoryReload] = useState(0);
+  const historyRequest = useRef<AbortController | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editResult, setEditResult] = useState<KitchenDesignState["generationResults"][number]>();
   const [editorSession, setEditorSession] = useState(0);
@@ -33,6 +37,10 @@ export function KitchenDesignResults({
     if (busy || refining) return;
 
     const abort = new AbortController();
+    historyRequest.current = abort;
+    setHistoryLoading(true);
+    setHistoryError("");
+    setNextCursor(null);
     fetch("/api/kitchen-design/history", { signal: abort.signal, cache: "no-store" })
       .then(async (response) => {
         const payload = await response.json();
@@ -41,16 +49,56 @@ export function KitchenDesignResults({
           throw new Error(payload.message || "Could not load saved designs.");
         }
         update({ generationHistory: payload.data });
+        setNextCursor(payload.nextCursor ?? null);
         setHistoryError("");
       })
       .catch((error) => {
         if (!abort.signal.aborted) {
           setHistoryError(error instanceof Error ? error.message : "Could not load saved designs.");
         }
+      })
+      .finally(() => {
+        if (historyRequest.current === abort) {
+          historyRequest.current = null;
+          setHistoryLoading(false);
+        }
       });
 
-    return () => abort.abort();
-  }, [busy, refining, update]);
+    return () => {
+      historyRequest.current?.abort();
+      historyRequest.current = null;
+    };
+  }, [busy, refining, update, historyReload]);
+
+  async function loadMoreHistory() {
+    if (!nextCursor || historyRequest.current || busy || refining) return;
+    const abort = new AbortController();
+    historyRequest.current = abort;
+    setHistoryLoading(true);
+    setHistoryError("");
+    try {
+      const response = await fetch(`/api/kitchen-design/history?cursor=${encodeURIComponent(nextCursor)}`, {
+        signal: abort.signal, cache: "no-store",
+      });
+      const payload = await response.json();
+      if (abort.signal.aborted) return;
+      if (!response.ok || payload.code !== 0) {
+        // An invalid/deleted cursor needs a first-page refresh, not the same cursor again.
+        if (response.status === 400) setNextCursor(null);
+        throw new Error(payload.message || "Could not load more designs.");
+      }
+      const combined = [...state.generationHistory, ...payload.data];
+      update({ generationHistory: Array.from(new Map(combined.map(run => [run.id, run])).values()) });
+      setNextCursor(payload.nextCursor ?? null);
+    } catch (error) {
+      if (!abort.signal.aborted) setHistoryError(error instanceof Error ? error.message : "Could not load more designs.");
+    } finally {
+      if (historyRequest.current === abort) {
+        historyRequest.current = null;
+        setHistoryLoading(false);
+      }
+    }
+  }
 
   useEffect(() => {
     setActiveIndex(0);
@@ -94,6 +142,15 @@ export function KitchenDesignResults({
     setEditResult(run.results[0]);
     onRefinementSaved(run, parentId);
   }
+
+  const historyControl = (nextCursor || historyError || historyLoading) ? (
+    <button type="button"
+      disabled={historyLoading || busy || refining}
+      onClick={() => nextCursor ? void loadMoreHistory() : setHistoryReload(value => value + 1)}
+      className="flex h-24 w-32 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-medium text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 sm:w-36">
+      {historyLoading ? "Loading…" : historyError ? "Try again" : "Load more"}
+    </button>
+  ) : null;
 
   return (
     <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white lg:sticky lg:top-28 lg:flex lg:h-[calc(100dvh-180px)] lg:min-h-[680px] lg:flex-col">
@@ -203,7 +260,7 @@ export function KitchenDesignResults({
           </div>
           {state.generationHistory.length > 0 && (
             <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-500">
-              {state.generationHistory.length} saved
+              {state.generationHistory.length} loaded
             </span>
           )}
         </div>
@@ -239,12 +296,17 @@ export function KitchenDesignResults({
                 </button>
               );
             })}
+            {historyControl}
           </div>
         ) : (
           <div className="flex h-24 items-center justify-center gap-3 rounded-lg bg-slate-50 text-sm text-slate-400">
             <ImageIcon size={20} /> <span>Generated results will appear here.</span>
           </div>
         )}
+        {historyError && state.generationHistory.length > 0 && (
+          <p role="alert" className="mt-2 text-xs text-red-600">{historyError}</p>
+        )}
+        {state.generationHistory.length === 0 && historyControl}
       </div>
     </section>
   );

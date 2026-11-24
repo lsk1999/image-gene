@@ -7,7 +7,7 @@ import { getSession, signIn } from "next-auth/react";
 import { Link, useRouter } from "@/i18n/navigation";
 import { useAppContext } from "@/contexts/app";
 import { isAuthEnabled, isGoogleAuthEnabled } from "@/lib/auth";
-import { initialState, KITCHEN_DESIGN_CREDIT_COST, type KitchenDesignState } from "./data";
+import { initialState, KITCHEN_DESIGN_CREDIT_COST, KITCHEN_HISTORY_LIMIT, type KitchenDesignState } from "./data";
 import {
   AreasSelector,
   AdditionalRequirements,
@@ -102,7 +102,7 @@ export default function KitchenDesignPage() {
         generationHistory: [
           run,
           ...previous.generationHistory.filter((item) => item.id !== run.id),
-        ].slice(0, 50),
+        ].slice(0, KITCHEN_HISTORY_LIMIT),
       };
     });
   }
@@ -224,7 +224,7 @@ export default function KitchenDesignPage() {
             parameters,
           },
           ...previous.generationHistory.filter((item) => item.id !== results[0].id),
-        ].slice(0, 50),
+        ].slice(0, KITCHEN_HISTORY_LIMIT),
       }));
     } catch (failure) {
       if (failure instanceof KitchenRequestError && failure.status === 401 && !abort.signal.aborted) {
