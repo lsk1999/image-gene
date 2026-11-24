@@ -90,8 +90,7 @@
       { "title": "Can I keep parts of my current kitchen?", "description": "Yes. You can preserve existing furniture and use the area controls to direct specific changes." },
       { "title": "Do I need to configure every area?", "description": "No. Areas and materials are optional. Unspecified areas can be coordinated by AI with the selected style." },
       { "title": "Can I change a generated design?", "description": "Yes. Open a result, describe the change you want, and save the new image alongside your other results." },
-      { "title": "Are the designs construction plans?", "description": "The images are visual concepts. Confirm dimensions, building requirements, materials and installation details with qualified professionals before construction." },
-      { "title": "Where are my generated images stored?", "description": "Generated results are associated with your signed-in account so you can access them from the kitchen designer." }
+      { "title": "Are the designs construction plans?", "description": "The images are visual concepts. Confirm dimensions, building requirements, materials and installation details with qualified professionals before construction." }
     ]
   },
   "cta": {
