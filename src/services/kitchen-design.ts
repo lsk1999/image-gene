@@ -34,29 +34,51 @@ export type KitchenParameters = z.infer<typeof kitchenParameters>;
 
 export function kitchenPrompt(parameters: KitchenParameters) {
   const style = styles.find(item => item.name === parameters.designStyle)!;
-  const editableAreas = parameters.selectedAreas.filter(area => hasAreaChange(parameters.materialPreferences[area]));
-  const preservedAreas = parameters.keepExistingFurniture
+  const keepExisting = parameters.keepExistingFurniture;
+  const additionalPreferences = parameters.customPreferences.trim();
+  const componentChoices = parameters.selectedAreas
+    .filter(area => hasAreaChange(parameters.materialPreferences[area]))
+    .map(area => {
+      const preference = parameters.materialPreferences[area]!;
+      // Built-in options target either the sink or faucet; custom text may cover both.
+      const label = area === "Sink & Faucet" && preference.value !== "Custom"
+        ? preference.value.endsWith(" Faucet") ? "Faucet finish" : "Sink material/type"
+        : area;
+      const value = preference.value === "Custom" ? preference.custom.trim() : preference.value;
+      return `- ${label}: ${value}.`;
+    });
+  const preservedAreas = keepExisting
     ? parameters.selectedAreas.filter(area => parameters.materialPreferences[area]?.value === "Keep original")
     : [];
-  const additionalPreferences = parameters.customPreferences.trim();
-  const areaChanges = editableAreas.map(area => {
-    const preference = parameters.materialPreferences[area]!;
-    return `${area}: ${preference.value === "Custom" ? preference.custom.trim() : preference.value}.`;
-  });
-  const preserveAreas = preservedAreas.length > 0
-    ? `Keep these areas as in the reference, where present: ${preservedAreas.join(", ")}.`
-    : "";
+  if (preservedAreas.length) {
+    componentChoices.push(`- Keep original: ${preservedAreas.join(", ")}.`);
+  }
 
   return [
-    "Create one photorealistic kitchen concept from the reference photo. Preserve the camera viewpoint, room proportions, structural walls, doors, and windows. Keep walkways clear. For an empty room, design a functional kitchen that fits. No captions, watermarks, or before/after collage.",
-    parameters.keepExistingFurniture
-      ? "Keep the original kitchen furniture, cabinetry, island, appliances, sink, and fixtures in their existing positions and appearance, except for explicit changes in Areas & Materials. Keep elements marked Keep original unchanged."
-      : "Treat the reference as an empty room shell. Remove all existing furniture and kitchen fittings from the design, including cabinets, countertops, island, appliances, sink, faucet, and lighting fixtures. Design and install a new set of kitchen fittings and furnish the room as needed. Use the area settings to specify the new components. Make the replacements visibly distinct and do not reuse original items, even if the new design uses similar finishes.",
-    preserveAreas,
-    ...areaChanges,
-    additionalPreferences && `Apply these requests where compatible with the furniture and area settings above: ${additionalPreferences}`,
-    `Use this style for new or explicitly changed elements: ${style.name}. ${style.description}`,
-  ].filter(Boolean).join("\n");
+    keepExisting
+      ? "Create one photorealistic kitchen design image based on retaining and reusing the existing furniture. The overall design should be beautiful and harmonious, with thoughtful proportions, colors, materials and lighting, combining functionality with a refined visual result."
+      : "Create one photorealistic image of a completely redesigned kitchen. The overall design should be beautiful and harmonious, with thoughtful proportions, colors, materials and lighting, combining functionality with a refined visual result.",
+    "1. SPACE\nPreserve the camera viewpoint, room proportions, and the positions of walls, doors, and windows.",
+    keepExisting
+      ? "2. PRESERVE AND MODIFY\nRetain the main forms and recognizable features of the existing furniture. Keep its original colors, materials, finishes and placement by default. Apply changes to these attributes when specified in the component choices or additional requirements below, and add furniture, lighting and kitchen fittings as needed for the space and its functions.\nDo not replace all existing furniture unless the user explicitly requests it. Keep items explicitly marked Keep original unchanged. Ensure a functional layout, clear walkways, and that all items fit the available space."
+      : "2. REDESIGN\nRemove the existing furniture. Based on the selected style, component choices and additional requirements below, plan a new layout and furnish the kitchen with entirely new fittings.\nCreate visibly different furniture forms, cabinet compositions, appliance arrangements and lighting placement, rather than simply changing colors or materials.\nKeep the layout functional, walkways clear, and all components appropriate for the available space.",
+    [
+      "3. STYLE",
+      `${style.name}: ${style.description}`,
+      keepExisting
+        ? "Use this style as the main design direction for requested changes and added components. Express a distinctive, harmonious style while retaining original furniture and unspecified finishes and placement. Respect the component choices, additional requirements and items explicitly marked Keep original."
+        : "Use this style as the main design direction. Express distinctive, harmonious style through furniture forms, colors, materials and lighting, rather than only changing colors. Respect the specified component choices and additional requirements.",
+    ].join("\n"),
+    [
+      "4. COMPONENT CHOICES",
+      ...componentChoices,
+      keepExisting
+        ? "For components without a specified choice, keep the original items as they are unless the additional requirements request a change."
+        : "Choose unspecified kitchen components to suit the selected style, available space and additional requirements.",
+    ].filter(Boolean).join("\n"),
+    additionalPreferences && `5. ADDITIONAL REQUIREMENTS\n${additionalPreferences}`,
+    "6. OUTPUT\nReturn one finished photorealistic kitchen image.\nNo captions, labels, visible watermarks, or before-and-after collage.",
+  ].filter(Boolean).join("\n\n");
 }
 
 export function imageMime(bytes: Uint8Array): string | null {

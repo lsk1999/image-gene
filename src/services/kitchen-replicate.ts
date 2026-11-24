@@ -18,6 +18,18 @@ const KONTEXT_MODELS = [
   "black-forest-labs/flux-kontext-max",
 ];
 
+export class KitchenReplicateError extends Error {
+  constructor(
+    readonly stage: string,
+    readonly predictionId: string | undefined,
+    readonly elapsedMs: number,
+    cause: unknown,
+  ) {
+    super(cause instanceof Error ? cause.message : "Unknown Replicate error", { cause });
+    this.name = "KitchenReplicateError";
+  }
+}
+
 function predictionInput(model: string, prompt: string, sourceUrl: string, promptUpsampling?: boolean) {
   const common = {
     prompt,
@@ -69,6 +81,8 @@ export function kitchenReplicate() {
       } = {},
     ) {
       const signal = AbortSignal.timeout(timeoutSeconds * 1000);
+      const startedAt = Date.now();
+      let stage = "create_prediction";
       let predictionId: string | undefined;
       let succeeded = false;
       try {
@@ -80,9 +94,11 @@ export function kitchenReplicate() {
           }),
         });
         if (!created.ok) throw new Error(`Replicate creation failed (${created.status}).`);
+        stage = "read_creation_response";
         let prediction = parsePrediction(await created.json());
         predictionId = prediction.id;
         while (prediction.status === "starting" || prediction.status === "processing") {
+          stage = "poll_prediction";
           await new Promise<void>((resolve, reject) => {
             const onAbort = () => { clearTimeout(timer); reject(new Error("Replicate generation timed out.")); };
             const timer = setTimeout(() => { signal.removeEventListener("abort", onAbort); resolve(); }, 1500);
@@ -93,6 +109,7 @@ export function kitchenReplicate() {
           if (!response.ok) throw new Error(`Replicate status failed (${response.status}).`);
           prediction = parsePrediction(await response.json());
         }
+        stage = "validate_prediction_output";
         if (prediction.status !== "succeeded") throw new Error(`Replicate prediction ${prediction.status}.`);
         succeeded = true;
         const output = typeof prediction.output === "string" ? prediction.output : Array.isArray(prediction.output) ? prediction.output[0] : null;
@@ -119,6 +136,7 @@ export function kitchenReplicate() {
         }
 
         // Only Replicate's delivery hosts receive its token. Other hosts use their returned URL as-is.
+        stage = "download_result_headers";
         const image = await fetch(url, {
           headers: isDeliveryHost ? { Authorization: `Bearer ${token}` } : undefined,
           signal,
@@ -129,6 +147,7 @@ export function kitchenReplicate() {
           throw new Error(`Replicate image download failed (${image.status}).`);
         }
         if (Number(image.headers.get("content-length")) > OUTPUT_LIMIT) throw new Error("Generated image is too large.");
+        stage = "download_result_body";
         const reader = image.body.getReader();
         const chunks: Uint8Array[] = [];
         let size = 0;
@@ -148,6 +167,8 @@ export function kitchenReplicate() {
         let offset = 0;
         for (const chunk of chunks) { result.set(chunk, offset); offset += chunk.byteLength; }
         return result;
+      } catch (error) {
+        throw new KitchenReplicateError(stage, predictionId, Date.now() - startedAt, error);
       } finally {
         if (predictionId && !succeeded) {
           await fetch(`${API}/predictions/${predictionId}/cancel`, {

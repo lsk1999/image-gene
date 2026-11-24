@@ -81,10 +81,10 @@ function AreaCard({ area, config, state, update }: SelectorProps & {
   const keepOriginal = preference.value === "Keep original";
   const status = enabled && !keepOriginal
     ? "Customize"
-    : state.keepExistingFurniture ? (enabled ? "Keep original" : "Use existing") : "AI decides";
-  const options = state.keepExistingFurniture
-    ? ["Keep original", ...config.options, "Custom"]
-    : [...config.options, "Custom"];
+    : state.keepExistingFurniture ? (enabled ? "Keep original" : "Use existing") : "AI designs it";
+  // The existing default value means no custom constraint: preserve in Keep
+  // existing mode, or let AI design in Redesign mode. Keep saved drafts compatible.
+  const options = ["Keep original", ...config.options, "Custom"];
   const changePreference = (patch: Partial<typeof preference>) => update({
     materialPreferences: { ...state.materialPreferences, [area]: { ...preference, ...patch } },
   });
@@ -114,7 +114,7 @@ function AreaCard({ area, config, state, update }: SelectorProps & {
           <div className="flex flex-wrap gap-2">
             {options.map(option => (
               <Choice key={option} selected={preference.value === option} onClick={() => changePreference({ value: option })}>
-                {option}
+                {option === "Keep original" && !state.keepExistingFurniture ? "AI designs it" : option}
               </Choice>
             ))}
           </div>
@@ -134,8 +134,8 @@ export function AreasSelector({ state, update }: SelectorProps) {
     <div className="space-y-3">
       <p className="mb-3 text-xs leading-5 text-slate-500">
         {state.keepExistingFurniture
-          ? "Existing items stay unless you specify a change below."
-          : "AI designs all new kitchen components. Choose materials or styles below to guide it."}
+          ? "All settings below are optional. Unselected areas stay as they are by default. To make changes, select an area and set your requirements."
+          : "All settings below are optional. AI designs unselected areas by default. To specify materials or styles, select an area and set your requirements."}
       </p>
       {areaEntries.map(([area, config], index) => (
         <div key={area} className={!expanded && index >= 4 && !state.selectedAreas.includes(area) ? "hidden" : "block"}>
@@ -148,7 +148,7 @@ export function AreasSelector({ state, update }: SelectorProps) {
 }
 
 export function AdditionalRequirements({ state, update }: { state: KitchenDesignState; update: UpdateDesign }) {
-  const suggestions = ["Keep the existing layout.", "Make the room brighter and warmer.", "Add more closed storage.", "Create a more open feeling."];
+  const suggestions = [state.keepExistingFurniture ? "Keep the existing layout." : "Replan the layout and relocate the main work zones.", "Make the room brighter and warmer.", "Add more closed storage.", "Create a more open feeling."];
   return (
     <div>
       <Textarea

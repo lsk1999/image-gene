@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { credits, kitchenGenerations } from "@/db/schema";
 import { getUserUuid } from "@/services/user";
 import { kitchenStorage } from "@/services/kitchen-supabase-storage";
-import { kitchenReplicate } from "@/services/kitchen-replicate";
+import { KitchenReplicateError, kitchenReplicate } from "@/services/kitchen-replicate";
 import { imageMime, kitchenParameters, kitchenPrompt } from "@/services/kitchen-design";
 import { CreditsTransType, lockCredits, spendCredits } from "@/services/credit";
 import { KITCHEN_DESIGN_CREDIT_COST } from "@/components/kitchen-design/data";
@@ -36,6 +36,13 @@ function savedResult(id: string, parameters: unknown, isRefinement: boolean) {
 }
 
 export async function POST(request: Request) {
+  const startedAt = Date.now();
+  let stage = "prepare_request";
+  let stageStartedAt = startedAt;
+  const enterStage = (next: string) => {
+    stage = next;
+    stageStartedAt = Date.now();
+  };
   let runId: string | undefined;
   let user = "";
   let ownsRun = false;
@@ -86,6 +93,7 @@ export async function POST(request: Request) {
       prompt = kitchenPrompt(settings);
     }
     const id = runId;
+    enterStage("claim_generation_and_credit");
     const rejection = await db().transaction(async (tx) => {
       await lockCredits(tx, user);
       const abandoned = await tx.update(kitchenGenerations).set({ status: "failed", updated_at: new Date() })
@@ -125,15 +133,24 @@ export async function POST(request: Request) {
     if (rejection) return rejection;
     ownsRun = true;
     const prefix = `kitchen-design/${user}/${id}`;
-    if (upload) await storage.upload(sourceKey, upload.bytes, upload.mime);
+    if (upload) {
+      enterStage("upload_source_to_supabase");
+      await storage.upload(sourceKey, upload.bytes, upload.mime);
+    }
+    enterStage("sign_source_url");
+    const sourceUrl = await storage.createSignedUrl(inputKey);
+    enterStage("replicate_generate_and_download");
     const result = await provider.generate(
       prompt,
-      await storage.createSignedUrl(inputKey),
+      sourceUrl,
       isRefinement ? { timeoutSeconds: 200, promptUpsampling: false } : undefined,
     );
+    enterStage("validate_result_image");
     if (imageMime(result) !== "image/png") throw new Error("Invalid generated PNG");
     const resultKey = `${prefix}/result.png`;
+    enterStage("upload_result_to_supabase");
     await storage.upload(resultKey, result, "image/png");
+    enterStage("save_completed_generation");
     const [completed] = await db().update(kitchenGenerations)
       .set({ status: "completed", result_key: resultKey, updated_at: new Date() })
       .where(and(eq(kitchenGenerations.uuid, runId), eq(kitchenGenerations.user_uuid, user), eq(kitchenGenerations.status, "processing")))
@@ -141,6 +158,31 @@ export async function POST(request: Request) {
     if (!completed) throw new Error("Kitchen generation is no longer active.");
     return savedResult(runId, parameters, isRefinement);
   } catch (error) {
+    // Capture before cleanup so refund/database latency does not obscure the failure.
+    const failedAt = Date.now();
+    const networkCodes: string[] = [];
+    let cause: unknown = error;
+    // Log codes only: nested fetch causes may contain signed URLs or other credentials.
+    for (let depth = 0; depth < 5 && cause && typeof cause === "object"; depth++) {
+      const details = cause as { code?: unknown; cause?: unknown };
+      if (typeof details.code === "string" && /^[A-Z0-9_]{1,80}$/.test(details.code)) {
+        networkCodes.push(details.code);
+      }
+      cause = details.cause;
+    }
+    console.error("Kitchen generation failed", {
+      runId,
+      stage,
+      stageElapsedMs: failedAt - stageStartedAt,
+      elapsedMs: failedAt - startedAt,
+      message: error instanceof Error ? error.message : "Unknown error",
+      ...(error instanceof KitchenReplicateError ? {
+        providerStage: error.stage,
+        predictionId: error.predictionId,
+        providerElapsedMs: error.elapsedMs,
+      } : {}),
+      ...(networkCodes.length ? { networkCodes } : {}),
+    });
     if (ownsRun && runId) {
       const id = runId;
       await db().transaction(async (tx) => {
@@ -156,7 +198,6 @@ export async function POST(request: Request) {
       }).catch(() => console.error("Could not release kitchen credit", { runId: id }));
     }
     if (!ownsRun && (error instanceof z.ZodError || error instanceof SyntaxError)) return fail("Invalid design settings.", 400);
-    console.error("Kitchen generation failed", { runId, message: error instanceof Error ? error.message : "Unknown error" });
     return fail("Could not generate and save the design. Please check History before trying again.", 503);
   }
 }
