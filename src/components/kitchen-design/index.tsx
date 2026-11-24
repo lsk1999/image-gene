@@ -180,6 +180,7 @@ export default function KitchenDesignPage() {
     setError("");
     const abort = new AbortController();
     controller.current = abort;
+    setBusy(true);
 
     try {
       const session = isAuthEnabled() ? await getSession() : null;
@@ -188,7 +189,6 @@ export default function KitchenDesignPage() {
         setAuthPrompt(true);
         return;
       }
-      setBusy(true);
       const parameters = getDesignParameters(state);
       const settings = JSON.stringify(parameters);
       const previous = lastGeneration.current;

@@ -319,6 +319,8 @@ export function KitchenDesignResults({
                     src={result.url}
                     alt={run.summary || "Previously generated kitchen design"}
                     loading="lazy"
+                    decoding="async"
+                    fetchPriority="low"
                     className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
                   />
                   <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 to-transparent px-2.5 pb-2 pt-6 text-white">

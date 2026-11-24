@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, inArray, lt } from "drizzle-orm";
+import { and, eq, inArray, lt } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { credits, kitchenGenerations } from "@/db/schema";
@@ -117,8 +117,6 @@ export async function POST(request: Request) {
             422,
           );
       }
-      const recent = await tx.select({ uuid: kitchenGenerations.uuid }).from(kitchenGenerations).where(and(eq(kitchenGenerations.user_uuid, user), gte(kitchenGenerations.created_at, new Date(Date.now() - 3600_000)))).orderBy(desc(kitchenGenerations.created_at)).limit(10);
-      if (recent.length >= 10) return fail("Generation limit reached. Please try again later.", 429);
       const [claimed] = await tx.insert(kitchenGenerations).values({ uuid: id, user_uuid: user, status: "processing", source_key: sourceKey, parameters, prompt, model: provider.model }).onConflictDoNothing().returning();
       if (!claimed) return fail("A design is already generating. Please wait for it to finish.", 409);
       if (!(await spendCredits(tx, user, KITCHEN_DESIGN_CREDIT_COST, CreditsTransType.KitchenDesign, `kitchen:${id}`))) {
