@@ -6,6 +6,7 @@
     "nav": {
       "items": [
         { "title": "How it works", "url": "/#how-it-works", "icon": "RiPlayCircleLine" },
+        { "title": "Blog", "url": "/blog", "icon": "RiArticleLine" },
         { "title": "Pricing", "url": "/pricing", "icon": "RiMoneyDollarCircleLine" },
         { "title": "Kitchen Designer", "url": "/ai-kitchen-design", "icon": "RiSparkling2Line" }
       ]
@@ -111,6 +112,7 @@
         { "title": "Product", "children": [
           { "title": "Home", "url": "/", "target": "_self" },
           { "title": "Kitchen Designer", "url": "/ai-kitchen-design", "target": "_self" },
+          { "title": "ChatGPT Kitchen Design Guide", "url": "/chatgpt-kitchen-design", "target": "_self" },
           { "title": "Pricing", "url": "/pricing", "target": "_self" }
         ] }
       ]

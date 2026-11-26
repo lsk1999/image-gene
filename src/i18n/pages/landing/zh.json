@@ -6,6 +6,7 @@
     "nav": {
       "items": [
         { "title": "使用流程", "url": "/#how-it-works", "icon": "RiPlayCircleLine" },
+        { "title": "Blog", "url": "/blog", "icon": "RiArticleLine" },
         { "title": "价格", "url": "/pricing", "icon": "RiMoneyDollarCircleLine" },
         { "title": "厨房设计工具", "url": "/ai-kitchen-design", "icon": "RiSparkling2Line" }
       ]
@@ -111,6 +112,7 @@
         { "title": "产品", "children": [
           { "title": "首页", "url": "/", "target": "_self" },
           { "title": "厨房设计工具", "url": "/ai-kitchen-design", "target": "_self" },
+          { "title": "ChatGPT 厨房设计指南（英文）", "url": "/chatgpt-kitchen-design", "target": "_self" },
           { "title": "价格", "url": "/pricing", "target": "_self" }
         ] }
       ]
