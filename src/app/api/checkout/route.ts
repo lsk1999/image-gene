@@ -180,20 +180,22 @@ export async function POST(req: Request) {
     return respData(result);
   } catch (e: any) {
     // Provider error objects can contain request credentials or checkout tokens.
-    // Only native TypeError text is useful here; never serialize the SDK error/request.
-    let typeErrorMessage: string | undefined;
-    if (e instanceof TypeError && typeof e.message === "string") {
-      let message = e.message;
+    // Log bounded, redacted descriptions only; never serialize the SDK error/request.
+    const safeMessage = (value: unknown): string | undefined => {
+      if (typeof value !== "string") return undefined;
+      let message = value;
       for (const [key, value] of Object.entries(process.env)) {
         if (value && value.length >= 8 && /SECRET|TOKEN|KEY|DATABASE_URL/i.test(key)) {
           message = message.split(value).join("[redacted]");
         }
       }
-      typeErrorMessage = message
+      return message
         .replace(/https?:\/\/[^\s"'<>]+/gi, "[url]")
+        .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[email]")
         .replace(/[A-Za-z0-9+/_=-]{64,}/g, "[redacted]")
         .replace(/[\r\n]/g, " ").slice(0, 300);
-    }
+    };
+    const typeErrorMessage = e instanceof TypeError ? safeMessage(e.message) : undefined;
     const safeCode = (value: unknown) => typeof value === "string" && /^[A-Z0-9_]{1,64}$/.test(value) ? value : undefined;
     const knownMessages = ["Invalid Waffo credit pack.", "Missing Waffo product mapping.", "Invalid site URL.", "Waffo product lookup failed.", "Waffo catalog does not match this credit pack.", "Invalid Waffo checkout URL.", "Waffo returned an unexpected redirect."];
     console.error("Checkout could not be started", {
@@ -203,6 +205,12 @@ export async function POST(req: Request) {
       reason: knownMessages.includes(e?.message) ? e.message : undefined,
       errorCode: safeCode(e?.code), networkCode: safeCode(e?.cause?.code),
       providerStatus: Number.isInteger(e?.status) ? e.status : Number.isInteger(e?.statusCode) ? e.statusCode : undefined,
+      providerErrors: e?.name === "WaffoPancakeError" && Array.isArray(e.errors)
+        ? e.errors.slice(0, 3).map((item: unknown) => {
+          const detail = item && typeof item === "object"
+            ? item as { message?: unknown; layer?: unknown } : {};
+          return { message: safeMessage(detail.message), layer: safeMessage(detail.layer) };
+        }) : undefined,
       configured: Object.fromEntries(["WAFFO_MODE", "WAFFO_MERCHANT_ID", "WAFFO_STORE_ID", "WAFFO_PRIVATE_KEY", "WAFFO_PRODUCTS", "DATABASE_URL", "NEXT_PUBLIC_WEB_URL"].map(key => [key, Boolean(process.env[key]?.trim())])),
       modeValid: ["test", "prod"].includes(process.env.WAFFO_MODE || ""),
     });

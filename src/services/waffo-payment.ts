@@ -118,7 +118,9 @@ export async function createWaffoCheckout(
       allowPromotionCodes: false,
       expiresInSeconds: 3600,
     },
-    { idempotencyKey: `kitchen-checkout:${order.order_no}` },
+    // Waffo permits only letters, digits, hyphens and underscores in this header.
+    // Keep the key stable for the same store/order to preserve retry deduplication.
+    { idempotencyKey: `kitchen-checkout-${config.storeId}-${order.order_no}` },
   );
   reportStage("waffo_validate_checkout");
   const url = new URL(session.checkoutUrl);
