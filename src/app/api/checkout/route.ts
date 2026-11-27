@@ -180,11 +180,26 @@ export async function POST(req: Request) {
     return respData(result);
   } catch (e: any) {
     // Provider error objects can contain request credentials or checkout tokens.
+    // Only native TypeError text is useful here; never serialize the SDK error/request.
+    let typeErrorMessage: string | undefined;
+    if (e instanceof TypeError && typeof e.message === "string") {
+      let message = e.message;
+      for (const [key, value] of Object.entries(process.env)) {
+        if (value && value.length >= 8 && /SECRET|TOKEN|KEY|DATABASE_URL/i.test(key)) {
+          message = message.split(value).join("[redacted]");
+        }
+      }
+      typeErrorMessage = message
+        .replace(/https?:\/\/[^\s"'<>]+/gi, "[url]")
+        .replace(/[A-Za-z0-9+/_=-]{64,}/g, "[redacted]")
+        .replace(/[\r\n]/g, " ").slice(0, 300);
+    }
     const safeCode = (value: unknown) => typeof value === "string" && /^[A-Z0-9_]{1,64}$/.test(value) ? value : undefined;
     const knownMessages = ["Invalid Waffo credit pack.", "Missing Waffo product mapping.", "Invalid site URL.", "Waffo product lookup failed.", "Waffo catalog does not match this credit pack.", "Invalid Waffo checkout URL."];
     console.error("Checkout could not be started", {
       provider: process.env.PAY_PROVIDER, stage,
       errorName: typeof e?.name === "string" && /^[A-Za-z0-9_]{1,80}$/.test(e.name) ? e.name : "UnknownError",
+      typeErrorMessage,
       reason: knownMessages.includes(e?.message) ? e.message : undefined,
       errorCode: safeCode(e?.code), networkCode: safeCode(e?.cause?.code),
       providerStatus: Number.isInteger(e?.status) ? e.status : Number.isInteger(e?.statusCode) ? e.statusCode : undefined,
