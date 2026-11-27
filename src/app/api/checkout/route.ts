@@ -195,7 +195,7 @@ export async function POST(req: Request) {
         .replace(/[\r\n]/g, " ").slice(0, 300);
     }
     const safeCode = (value: unknown) => typeof value === "string" && /^[A-Z0-9_]{1,64}$/.test(value) ? value : undefined;
-    const knownMessages = ["Invalid Waffo credit pack.", "Missing Waffo product mapping.", "Invalid site URL.", "Waffo product lookup failed.", "Waffo catalog does not match this credit pack.", "Invalid Waffo checkout URL."];
+    const knownMessages = ["Invalid Waffo credit pack.", "Missing Waffo product mapping.", "Invalid site URL.", "Waffo product lookup failed.", "Waffo catalog does not match this credit pack.", "Invalid Waffo checkout URL.", "Waffo returned an unexpected redirect."];
     console.error("Checkout could not be started", {
       provider: process.env.PAY_PROVIDER, stage,
       errorName: typeof e?.name === "string" && /^[A-Za-z0-9_]{1,80}$/.test(e.name) ? e.name : "UnknownError",

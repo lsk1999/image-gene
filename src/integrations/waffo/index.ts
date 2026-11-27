@@ -22,13 +22,20 @@ export function waffoClient() {
   return new WaffoPancake({
     merchantId,
     privateKey: privateKey.replace(/\\n/g, "\n"),
-    fetch: (input, init) =>
-      fetch(input, {
+    fetch: async (input, init) => {
+      const response = await fetch(input, {
         ...init,
         signal: AbortSignal.timeout(15_000),
-        redirect: "error",
-        cache: "no-store",
-      }),
+        // Workers supports follow/manual, but rejects redirect: "error".
+        // These are signed POSTs and must never forward credentials to a redirect.
+        redirect: "manual",
+      });
+      if (response.status >= 300 && response.status < 400) {
+        await response.body?.cancel().catch(() => undefined);
+        throw new Error("Waffo returned an unexpected redirect.");
+      }
+      return response;
+    },
   });
 }
 

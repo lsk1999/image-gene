@@ -93,7 +93,7 @@ export function kitchenReplicate() {
       try {
         // Never automatically retry creation: the first request may already be billed.
         const created = await fetch(`${API}/models/${model}/predictions`, {
-          method: "POST", headers: { ...headers, Prefer: "wait=60", "Cancel-After": `${timeoutSeconds}s` }, signal, redirect: "error",
+          method: "POST", headers: { ...headers, Prefer: "wait=60", "Cancel-After": `${timeoutSeconds}s` }, signal, redirect: "manual",
           body: JSON.stringify({
             input: predictionInput(model, prompt, sourceUrl, promptUpsampling),
           }),
@@ -113,7 +113,7 @@ export function kitchenReplicate() {
             if (signal.aborted) onAbort();
             else signal.addEventListener("abort", onAbort, { once: true });
           });
-          const response = await fetch(`${API}/predictions/${predictionId}`, { headers, signal, cache: "no-store", redirect: "error" });
+          const response = await fetch(`${API}/predictions/${predictionId}`, { headers, signal, cache: "no-store", redirect: "manual" });
           if (!response.ok) throw new Error(`Replicate status failed (${response.status}).`);
           prediction = parsePrediction(await response.json());
           if (prediction.id !== predictionId) throw new Error("Replicate prediction ID mismatch.");
@@ -184,7 +184,7 @@ export function kitchenReplicate() {
       } finally {
         if (predictionId && !succeeded) {
           await fetch(`${API}/predictions/${predictionId}/cancel`, {
-            method: "POST", headers, signal: AbortSignal.timeout(5000), redirect: "error",
+            method: "POST", headers, signal: AbortSignal.timeout(5000), redirect: "manual",
           }).then(async response => { await response.body?.cancel(); }).catch(() => undefined);
         }
       }
