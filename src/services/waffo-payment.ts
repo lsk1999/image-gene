@@ -44,10 +44,9 @@ export async function createWaffoCheckout(
   )
     throw new Error("Invalid site URL.");
   const success = new URL(
-    `${locale === "zh" ? "/zh" : ""}/payment-status`,
+    `${locale === "zh" ? "/zh" : ""}/ai-kitchen-design`,
     site,
   );
-  success.searchParams.set("order_no", order.order_no);
   reportStage("waffo_initialize_sdk");
   const client = waffoClient();
   // Confirm the mapped ID belongs to this store and has the advertised price.
