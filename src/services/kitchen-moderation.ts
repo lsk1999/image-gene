@@ -9,7 +9,7 @@ export class KitchenModerationError extends Error {}
 export class KitchenModerationServiceError extends Error {
   constructor(readonly reason: string) {
     super(
-      "Prompt safety checking is temporarily unavailable. Please try again shortly.",
+      "We couldn't check your design request right now. No image was generated. Please try again in a moment.",
     );
   }
 }
@@ -77,8 +77,8 @@ export async function screenKitchenPrompt(id: string, prompt: string) {
   ) {
     throw new KitchenModerationError(
       verdicts.some((verdict) => verdict.action === ScanAction.Review)
-        ? "Your design instructions require a safety review, so generation has not started. Please revise them or contact support."
-        : "Your design instructions did not pass the safety check. Please revise your instructions and custom choices to describe a kitchen design.",
+        ? "This design request needs an additional safety review. No image was generated. Try revising your additional instructions or custom descriptions, or contact support for help."
+        : "Your design request didn't pass our content safety review. No image was generated. Please edit your additional instructions or custom descriptions and try again. If you think this is a mistake, contact support.",
     );
   }
 }
