@@ -7,10 +7,13 @@ import Feature2 from "@/components/blocks/feature2";
 import Feature3 from "@/components/blocks/feature3";
 import Hero from "@/components/blocks/hero";
 import Pricing from "@/components/blocks/pricing";
+import { paymentSettings } from "@/services/payment-settings";
 import Showcase from "@/components/blocks/showcase";
 import Stats from "@/components/blocks/stats";
 import Testimonial from "@/components/blocks/testimonial";
 import { getLandingPage } from "@/services/page";
+
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
@@ -49,7 +52,7 @@ export default async function LandingPage({
       {page.feature && <Feature section={page.feature} />}
       {page.showcase && <Showcase section={page.showcase} />}
       {page.stats && <Stats section={page.stats} />}
-      {page.pricing && <Pricing pricing={page.pricing} />}
+      {page.pricing && <Pricing pricing={page.pricing} {...paymentSettings()} />}
       {page.testimonial && <Testimonial section={page.testimonial} />}
       {page.faq && <FAQ section={page.faq} />}
       {page.cta && <CTA section={page.cta} />}

@@ -12,6 +12,8 @@ import { newStripeClient } from "@/integrations/stripe";
 import { Order } from "@/types/order";
 import { newCreemClient } from "@/integrations/creem";
 import { createDodoCheckout } from "@/services/dodo-payment";
+import { createWaffoCheckout } from "@/services/waffo-payment";
+import { assertKitchenModerationConfigured } from "@/services/kitchen-moderation";
 
 export async function POST(req: Request) {
   if (process.env.CHECKOUT_ENABLED !== "true") {
@@ -24,6 +26,8 @@ export async function POST(req: Request) {
   try {
     let { product_id, currency, locale } = await req.json();
     const provider = process.env.PAY_PROVIDER || "stripe";
+    if (!["waffo", "dodo", "creem", "stripe"].includes(provider)) throw new Error("Unsupported payment provider.");
+    locale = locale === "zh" ? "zh" : "en";
 
     let cancel_url = `${
       process.env.NEXT_PUBLIC_PAY_CANCEL_URL || process.env.NEXT_PUBLIC_WEB_URL
@@ -75,14 +79,14 @@ export async function POST(req: Request) {
     }
 
     const is_subscription = interval === "month" || interval === "year";
-    if (provider === "dodo" && (is_subscription || currency !== item.currency)) {
+    if (["dodo", "waffo"].includes(provider) && (is_subscription || currency !== item.currency)) {
       return respErr("This checkout supports one-time purchases in the listed currency.");
     }
 
     // get signed user
     const user_uuid = await getUserUuid();
     if (!user_uuid) {
-      return respErr("no auth, please sign-in");
+      return Response.json({ code: -1, message: "Sign in to continue." }, { status: 401 });
     }
 
     let user_email = await getUserEmail();
@@ -95,6 +99,7 @@ export async function POST(req: Request) {
     if (!user_email) {
       return respErr("invalid user");
     }
+    if (provider === "waffo") assertKitchenModerationConfigured();
 
     // generate order_no
     const order_no = getSnowId();
@@ -142,6 +147,9 @@ export async function POST(req: Request) {
     };
     const savedOrder = await insertOrder(order);
 
+    if (provider === "waffo") {
+      return respData(await createWaffoCheckout(savedOrder, locale));
+    }
     if (provider === "dodo") {
       return respData(await createDodoCheckout(savedOrder, locale));
     }
@@ -166,11 +174,9 @@ export async function POST(req: Request) {
 
     return respData(result);
   } catch (e: any) {
-    console.log("checkout failed: ", e);
-    if (process.env.PAY_PROVIDER === "dodo") {
-      return respErr("Could not start checkout. Please try again later.");
-    }
-    return respErr("checkout failed: " + e.message);
+    // Provider error objects can contain request credentials or checkout tokens.
+    console.error("Checkout could not be started", { provider: process.env.PAY_PROVIDER });
+    return Response.json({ code: -1, message: "Could not start checkout. Please try again later." }, { status: 503 });
   }
 }
 

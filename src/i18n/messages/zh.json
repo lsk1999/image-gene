@@ -33,6 +33,8 @@
     "cancel_title": "取消"
   },
   "my_orders": {
+    "paid": "已支付",
+    "refunded": "已退款",
     "title": "我的订单",
     "description": "在 ShipAny 上购买的订单。",
     "no_orders": "未找到订单",

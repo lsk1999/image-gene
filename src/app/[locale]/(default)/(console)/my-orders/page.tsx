@@ -21,15 +21,16 @@ export default async function () {
     redirect(`/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`);
   }
 
-  let orders = await getOrdersByUserUuid(user_uuid);
+  let orders = await getOrdersByUserUuid(user_uuid, true);
   if (!orders || orders.length === 0) {
-    orders = await getOrdersByPaidEmail(user_email);
+    orders = await getOrdersByPaidEmail(user_email, true);
   }
 
   const columns: TableColumn[] = [
     { name: "order_no", title: t("my_orders.table.order_no") },
     { name: "paid_email", title: t("my_orders.table.email") },
     { name: "product_name", title: t("my_orders.table.product_name") },
+    { name: "status", title: t("my_orders.table.status"), callback: (item: any) => item.status === "refunded" ? t("my_orders.refunded") : t("my_orders.paid") },
     {
       name: "amount",
       title: t("my_orders.table.amount"),

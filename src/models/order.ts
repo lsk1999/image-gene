@@ -1,6 +1,6 @@
 import { orders } from "@/db/schema";
 import { db } from "@/db";
-import { asc, desc, eq, gte } from "drizzle-orm";
+import { asc, desc, eq, gte, inArray } from "drizzle-orm";
 import { and } from "drizzle-orm";
 
 export enum OrderStatus {
@@ -134,13 +134,14 @@ export async function updateOrderSubscription(
 }
 
 export async function getOrdersByUserUuid(
-  user_uuid: string
+  user_uuid: string,
+  includeRefunded = false,
 ): Promise<(typeof orders.$inferSelect)[] | undefined> {
   const data = await db()
     .select()
     .from(orders)
     .where(
-      and(eq(orders.user_uuid, user_uuid), eq(orders.status, OrderStatus.Paid))
+      and(eq(orders.user_uuid, user_uuid), inArray(orders.status, includeRefunded ? [OrderStatus.Paid, "refunded"] : [OrderStatus.Paid]))
     )
     .orderBy(desc(orders.created_at));
 
@@ -165,7 +166,8 @@ export async function getOrdersByUserEmail(
 }
 
 export async function getOrdersByPaidEmail(
-  paid_email: string
+  paid_email: string,
+  includeRefunded = false,
 ): Promise<(typeof orders.$inferSelect)[] | undefined> {
   const data = await db()
     .select()
@@ -173,7 +175,7 @@ export async function getOrdersByPaidEmail(
     .where(
       and(
         eq(orders.paid_email, paid_email),
-        eq(orders.status, OrderStatus.Paid)
+        inArray(orders.status, includeRefunded ? [OrderStatus.Paid, "refunded"] : [OrderStatus.Paid])
       )
     )
     .orderBy(desc(orders.created_at));

@@ -122,7 +122,9 @@
     "agreement": { "items": [
       { "title": "隐私政策", "url": "/privacy-policy" },
       { "title": "服务条款", "url": "/terms-of-service" },
-      { "title": "退款与取消政策", "url": "/refund-policy" }
+      { "title": "退款与取消政策", "url": "/refund-policy" },
+      { "title": "可接受使用政策", "url": "/acceptable-use-policy" },
+      { "title": "AI 模型说明", "url": "/ai-models" }
     ] }
   }
 }

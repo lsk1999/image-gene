@@ -20,6 +20,8 @@ AUTH_URL = "https://aidesignkitchen.com/api/auth"
 AUTH_TRUST_HOST = "true"
 KITCHEN_REPLICATE_MODEL = "google/nano-banana-2.1"
 SUPABASE_STORAGE_BUCKET = "kitchen-design"
-PAY_PROVIDER = "dodo"
-# Configure DODO_MODE, CHECKOUT_ENABLED and DODO_PRODUCTS in the Worker's runtime variables.
-# Store DODO_PAYMENTS_API_KEY and DODO_WEBHOOK_SECRET as Worker secrets.
+PAY_PROVIDER = "waffo"
+# Complete docs/waffo-payments.md before deploying/enabling checkout.
+# Set WAFFO_MODE, WAFFO_MERCHANT_ID, WAFFO_STORE_ID, WAFFO_PRODUCTS and CHECKOUT_ENABLED in runtime variables.
+# Secrets: WAFFO_PRIVATE_KEY (PEM), REPLICATE_API_TOKEN (generation and image moderation).
+# Keep the old DODO_* secrets until all historical payments are settled.

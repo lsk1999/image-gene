@@ -12,6 +12,7 @@ import { updateAffiliateForOrder } from "./affiliate";
 import { Order } from "@/types/order";
 import Stripe from "stripe";
 import { orders } from "@/db/schema";
+import { readWaffoBinding } from "@/integrations/waffo";
 
 // update paied order, call by async callback
 export async function updateOrder({
@@ -33,6 +34,7 @@ export async function updateOrder({
     if (!order) {
       throw new Error("invalid order");
     }
+    if (readWaffoBinding(order.order_detail)) throw new Error("Waffo orders require verified Waffo fulfillment.");
 
     // order already paied
     if (order.status === OrderStatus.Paid) {

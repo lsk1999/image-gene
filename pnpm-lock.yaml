@@ -143,6 +143,9 @@ importers:
       '@uiw/react-md-editor':
         specifier: ^4.0.5
         version: 4.0.5(@types/react@18.3.18)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+      '@waffo/pancake-ts':
+        specifier: ^0.28.0
+        version: 0.28.0
       ai:
         specifier: ^4.1.64
         version: 4.1.64(react@19.0.0)(zod@3.24.1)
@@ -3857,6 +3860,10 @@ packages:
 
   '@vercel/static-config@3.0.0':
     resolution: {integrity: sha512-2qtvcBJ1bGY0dYGYh3iM7yGKkk971FujLEDXzuW5wcZsPr1GSEjO/w2iSr3qve6nDDtBImsGoDEnus5FI4+fIw==}
+
+  '@waffo/pancake-ts@0.28.0':
+    resolution: {integrity: sha512-0pR9qkXY7z2wSusFT55ZO2aviMNArxSS/pCpItkFgDCmVWzieV1GNSqCQCZqw/t7AkWUToxkTZhhylfypb/vcA==}
+    engines: {node: '>=20.0.0'}
 
   abbrev@1.1.1:
     resolution: {integrity: sha512-nne9/IiQ/hzIhY6pdDnbBtz7DjPTKrY00P/zvPSm5pOFkl6xuGrGnXn/VtTNNfNtAfZ9/1RtehkszU9qcTii0Q==}
@@ -11901,6 +11908,8 @@ snapshots:
       ajv: 8.6.3
       json-schema-to-ts: 1.6.4
       ts-morph: 12.0.0
+
+  '@waffo/pancake-ts@0.28.0': {}
 
   abbrev@1.1.1: {}
 

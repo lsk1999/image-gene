@@ -122,7 +122,9 @@
     "agreement": { "items": [
       { "title": "Privacy Policy", "url": "/privacy-policy" },
       { "title": "Terms of Service", "url": "/terms-of-service" },
-      { "title": "Refund and Cancellation Policy", "url": "/refund-policy" }
+      { "title": "Refund and Cancellation Policy", "url": "/refund-policy" },
+      { "title": "Acceptable Use Policy", "url": "/acceptable-use-policy" },
+      { "title": "AI Models", "url": "/ai-models" }
     ] }
   }
 }

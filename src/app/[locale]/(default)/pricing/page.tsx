@@ -1,5 +1,5 @@
 import Pricing from "@/components/blocks/pricing";
-import { dodoMode } from "@/integrations/dodo";
+import { paymentSettings } from "@/services/payment-settings";
 import { getPricingPage } from "@/services/page";
 
 export const dynamic = "force-dynamic";
@@ -11,11 +11,7 @@ export default async function PricingPage({
 }) {
   const { locale } = await params;
   const page = await getPricingPage(locale);
-  const mode = process.env.PAY_PROVIDER === "dodo" ? dodoMode() : undefined;
-
-  const checkoutEnabled = process.env.CHECKOUT_ENABLED === "true";
-
   return page.pricing ? (
-    <Pricing pricing={page.pricing} dodoMode={mode} checkoutEnabled={checkoutEnabled} />
+    <Pricing pricing={page.pricing} {...paymentSettings()} />
   ) : null;
 }

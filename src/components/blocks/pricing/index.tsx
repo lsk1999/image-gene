@@ -3,7 +3,7 @@
 import { Check, Loader } from "lucide-react";
 import { PricingItem, Pricing as PricingType } from "@/types/blocks/pricing";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,11 +16,11 @@ import { Link } from "@/i18n/navigation";
 
 export default function Pricing({
   pricing,
-  dodoMode,
-  checkoutEnabled = true,
+  paymentMode,
+  checkoutEnabled = false,
 }: {
   pricing: PricingType;
-  dodoMode?: "test" | "live";
+  paymentMode?: "test" | "live";
   checkoutEnabled?: boolean;
 }) {
   if (pricing.disabled) {
@@ -29,7 +29,8 @@ export default function Pricing({
 
   const locale = useLocale();
 
-  const { user, setShowSignModal } = useAppContext();
+  const { setShowSignModal } = useAppContext();
+  const checkoutInFlight = useRef(false);
 
   const [group, setGroup] = useState(() => {
     // First look for a group with is_featured set to true
@@ -47,21 +48,17 @@ export default function Pricing({
     ?? visiblePacks[0];
 
   const handleCheckout = async (item: PricingItem, cn_pay: boolean = false) => {
+    if (!checkoutEnabled || checkoutInFlight.current) return;
+    checkoutInFlight.current = true;
     setSelectedPackId(item.product_id);
+    setIsLoading(true);
+    setProductId(item.product_id);
     try {
-      if (!user) {
-        setShowSignModal(true);
-        return;
-      }
-
       const params = {
         product_id: item.product_id,
         currency: cn_pay ? "cny" : item.currency,
         locale: locale || "en",
       };
-
-      setIsLoading(true);
-      setProductId(item.product_id);
 
       const response = await fetch("/api/checkout", {
         method: "POST",
@@ -69,6 +66,7 @@ export default function Pricing({
           "Content-Type": "application/json",
         },
         body: JSON.stringify(params),
+        signal: AbortSignal.timeout(45_000),
       });
 
       if (response.status === 401) {
@@ -80,8 +78,8 @@ export default function Pricing({
       }
 
       const { code, message, data } = await response.json();
-      if (code !== 0) {
-        toast.error(message);
+      if (!response.ok || code !== 0) {
+        toast.error(message || "Could not start checkout. Please try again.");
         return;
       }
 
@@ -93,10 +91,9 @@ export default function Pricing({
 
       window.location.href = checkout_url;
     } catch (e) {
-      console.log("checkout failed: ", e);
-
       toast.error("checkout failed");
     } finally {
+      checkoutInFlight.current = false;
       setIsLoading(false);
       setProductId(null);
     }
@@ -120,7 +117,7 @@ export default function Pricing({
               </Link>
             </p>
           )}
-          {checkoutEnabled && dodoMode === "test" && (
+          {checkoutEnabled && paymentMode === "test" && (
             <p role="status" className="mt-4 text-sm font-medium text-slate-700">
               {locale === "zh" ? "测试结账，仅使用测试卡。" : "Test checkout. Use a test card only."}
             </p>
@@ -253,7 +250,7 @@ export default function Pricing({
                       )}
                     </div>
                     <div className="flex flex-col gap-2">
-                      {checkoutEnabled && !dodoMode && item.cn_amount && item.cn_amount > 0 ? (
+                      {checkoutEnabled && !paymentMode && item.cn_amount && item.cn_amount > 0 ? (
                         <button
                             type="button"
                             className="relative z-10 mt-2 flex h-12 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition-colors hover:border-primary/30 hover:bg-primary/5"

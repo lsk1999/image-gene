@@ -59,7 +59,8 @@ export function kitchenStorage() {
   const { bucket, headers, origin, storageUrl } = storageConfig();
 
   return {
-    async upload(key: string, body: Uint8Array, contentType: string) {
+    async upload(key: string, body: Uint8Array, contentType: string, timeoutMs = 60_000) {
+      if (!Number.isFinite(timeoutMs) || timeoutMs < 1000) throw new Error("Kitchen image upload deadline exceeded.");
       const path = encodeObjectPath(bucket, key);
       const response = await fetch(`${storageUrl}/object/${path}`, {
         method: "POST",
@@ -71,7 +72,7 @@ export function kitchenStorage() {
         },
         body: new Uint8Array(body).buffer,
         redirect: "manual",
-        signal: AbortSignal.timeout(60_000),
+        signal: AbortSignal.timeout(Math.min(60_000, Math.floor(timeoutMs))),
       });
       await requireSuccess(response, "upload");
       await response.body?.cancel().catch(() => undefined);

@@ -3,7 +3,7 @@ import { z } from "zod";
 
 const predictionSchema = z.object({
   id: z.string().regex(/^[a-zA-Z0-9_-]+$/),
-  status: z.enum(["starting", "processing", "succeeded", "failed", "canceled"]),
+  status: z.enum(["starting", "processing", "succeeded", "failed", "canceled", "aborted"]),
   output: z.unknown().optional(),
 });
 const API = "https://api.replicate.com/v1";
@@ -61,13 +61,18 @@ function parsePrediction(value: unknown) {
   return parsed.data;
 }
 
-export function kitchenReplicate() {
-  const token = process.env.REPLICATE_API_TOKEN;
-  if (!token) throw new Error("Replicate API token is not configured.");
+export function kitchenModelName() {
   const model = process.env.KITCHEN_REPLICATE_MODEL?.trim() || DEFAULT_MODEL;
   if (model !== DEFAULT_MODEL && !KONTEXT_MODELS.includes(model)) {
     throw new Error("Unsupported kitchen Replicate model.");
   }
+  return model;
+}
+
+export function kitchenReplicate() {
+  const token = process.env.REPLICATE_API_TOKEN;
+  if (!token) throw new Error("Replicate API token is not configured.");
+  const model = kitchenModelName();
   const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 
   return {
@@ -88,14 +93,17 @@ export function kitchenReplicate() {
       try {
         // Never automatically retry creation: the first request may already be billed.
         const created = await fetch(`${API}/models/${model}/predictions`, {
-          method: "POST", headers: { ...headers, Prefer: "wait=60", "Cancel-After": `${timeoutSeconds}s` }, signal,
+          method: "POST", headers: { ...headers, Prefer: "wait=60", "Cancel-After": `${timeoutSeconds}s` }, signal, redirect: "error",
           body: JSON.stringify({
             input: predictionInput(model, prompt, sourceUrl, promptUpsampling),
           }),
         });
         if (!created.ok) throw new Error(`Replicate creation failed (${created.status}).`);
         stage = "read_creation_response";
-        let prediction = parsePrediction(await created.json());
+        const creation = await created.json();
+        const createdId = predictionSchema.pick({ id: true }).safeParse(creation);
+        if (createdId.success) predictionId = createdId.data.id;
+        let prediction = parsePrediction(creation);
         predictionId = prediction.id;
         while (prediction.status === "starting" || prediction.status === "processing") {
           stage = "poll_prediction";
@@ -105,9 +113,10 @@ export function kitchenReplicate() {
             if (signal.aborted) onAbort();
             else signal.addEventListener("abort", onAbort, { once: true });
           });
-          const response = await fetch(`${API}/predictions/${predictionId}`, { headers, signal, cache: "no-store" });
+          const response = await fetch(`${API}/predictions/${predictionId}`, { headers, signal, cache: "no-store", redirect: "error" });
           if (!response.ok) throw new Error(`Replicate status failed (${response.status}).`);
           prediction = parsePrediction(await response.json());
+          if (prediction.id !== predictionId) throw new Error("Replicate prediction ID mismatch.");
         }
         stage = "validate_prediction_output";
         if (prediction.status !== "succeeded") throw new Error(`Replicate prediction ${prediction.status}.`);
@@ -146,7 +155,10 @@ export function kitchenReplicate() {
           await image.body?.cancel().catch(() => undefined);
           throw new Error(`Replicate image download failed (${image.status}).`);
         }
-        if (Number(image.headers.get("content-length")) > OUTPUT_LIMIT) throw new Error("Generated image is too large.");
+        if (Number(image.headers.get("content-length")) > OUTPUT_LIMIT) {
+          await image.body.cancel().catch(() => undefined);
+          throw new Error("Generated image is too large.");
+        }
         stage = "download_result_body";
         const reader = image.body.getReader();
         const chunks: Uint8Array[] = [];
@@ -172,8 +184,8 @@ export function kitchenReplicate() {
       } finally {
         if (predictionId && !succeeded) {
           await fetch(`${API}/predictions/${predictionId}/cancel`, {
-            method: "POST", headers, signal: AbortSignal.timeout(5000),
-          }).catch(() => undefined);
+            method: "POST", headers, signal: AbortSignal.timeout(5000), redirect: "error",
+          }).then(async response => { await response.body?.cancel(); }).catch(() => undefined);
         }
       }
     },

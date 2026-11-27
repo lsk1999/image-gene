@@ -33,6 +33,8 @@
     "cancel_title": "Cancel"
   },
   "my_orders": {
+    "paid": "Paid",
+    "refunded": "Refunded",
     "title": "My Orders",
     "description": "orders paid with ShipAny.",
     "no_orders": "No orders found",

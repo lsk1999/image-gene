@@ -8,6 +8,7 @@ import {
   timestamp,
   unique,
   uniqueIndex,
+  index,
   jsonb,
 } from "drizzle-orm/pg-core";
 
@@ -79,6 +80,26 @@ export const orders = pgTable("orders", {
   paid_at: timestamp({ withTimezone: true }),
   paid_email: varchar({ length: 255 }),
   paid_detail: text(),
+});
+
+// Verified payment notifications and content safety audit records.
+export const paymentEvents = pgTable("payment_events", {
+  event_key: varchar({ length: 512 }).primaryKey(),
+  order_no: varchar({ length: 255 }).notNull(),
+  event_type: varchar({ length: 64 }).notNull(),
+  payment_id: varchar({ length: 255 }).notNull(),
+  charged_cents: integer().notNull(),
+  refunded_cents: integer().notNull().default(0),
+  payload: jsonb().notNull(),
+  created_at: timestamp({ withTimezone: true }).notNull().defaultNow(),
+}, table => [index("payment_events_order_idx").on(table.order_no)]);
+
+export const kitchenModeration = pgTable("kitchen_moderation", {
+  id: varchar({ length: 255 }).primaryKey(),
+  generation_id: varchar({ length: 255 }).notNull(),
+  stage: varchar({ length: 30 }).notNull(),
+  result: jsonb().notNull(),
+  created_at: timestamp({ withTimezone: true }).notNull().defaultNow(),
 });
 
 // API Keys table
