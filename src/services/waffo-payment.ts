@@ -18,7 +18,9 @@ import { reclaimWaffoRefundCredits } from "@/services/waffo-refund-credit";
 export async function createWaffoCheckout(
   order: typeof orders.$inferSelect,
   locale: string,
+  reportStage: (stage: string) => void = () => {},
 ) {
+  reportStage("waffo_validate_config");
   const config = waffoConfig();
   if (
     order.interval !== "one-time" ||
@@ -46,8 +48,10 @@ export async function createWaffoCheckout(
     site,
   );
   success.searchParams.set("order_no", order.order_no);
+  reportStage("waffo_initialize_sdk");
   const client = waffoClient();
   // Confirm the mapped ID belongs to this store and has the advertised price.
+  reportStage("waffo_lookup_catalog");
   const catalog = await client.graphql.query<unknown>({
     query: `query($storeId: String!) {
     store(id: $storeId) { id prodEnabled onetimeProducts { id status prices { currency priceInfo { amount taxCategory } } } }
@@ -55,6 +59,7 @@ export async function createWaffoCheckout(
     variables: { storeId: config.storeId },
   });
   if (catalog.errors?.length) throw new Error("Waffo product lookup failed.");
+  reportStage("waffo_validate_catalog");
   const store = z
     .object({
       store: z.object({
@@ -91,6 +96,7 @@ export async function createWaffoCheckout(
     price.taxCategory !== TaxCategory.SaaS
   )
     throw new Error("Waffo catalog does not match this credit pack.");
+  reportStage("waffo_create_checkout");
   const session = await client.checkout.authenticated.create(
     {
       productId,
@@ -114,6 +120,7 @@ export async function createWaffoCheckout(
     },
     { idempotencyKey: `kitchen-checkout:${order.order_no}` },
   );
+  reportStage("waffo_validate_checkout");
   const url = new URL(session.checkoutUrl);
   if (
     !session.sessionId ||
@@ -123,6 +130,7 @@ export async function createWaffoCheckout(
   )
     throw new Error("Invalid Waffo checkout URL.");
   const binding = { provider: "waffo", ...config, productId, nonce };
+  reportStage("waffo_save_checkout");
   await updateOrderSession(
     order.order_no,
     session.sessionId,

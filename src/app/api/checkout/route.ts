@@ -16,6 +16,7 @@ import { createWaffoCheckout } from "@/services/waffo-payment";
 import { assertKitchenModerationConfigured } from "@/services/kitchen-moderation";
 
 export async function POST(req: Request) {
+  let stage = "read_request";
   if (process.env.CHECKOUT_ENABLED !== "true") {
     return Response.json(
       { code: -1, message: "Credit purchases are temporarily unavailable." },
@@ -42,6 +43,7 @@ export async function POST(req: Request) {
     }
 
     // validate checkout params
+    stage = "load_pricing";
     const page = await getPricingPage(locale);
     if (!page || !page.pricing || !page.pricing.items) {
       return respErr("invalid pricing table");
@@ -84,6 +86,7 @@ export async function POST(req: Request) {
     }
 
     // get signed user
+    stage = "get_authenticated_user";
     const user_uuid = await getUserUuid();
     if (!user_uuid) {
       return Response.json({ code: -1, message: "Sign in to continue." }, { status: 401 });
@@ -99,6 +102,7 @@ export async function POST(req: Request) {
     if (!user_email) {
       return respErr("invalid user");
     }
+    stage = "validate_moderation_config";
     if (provider === "waffo") assertKitchenModerationConfigured();
 
     // generate order_no
@@ -145,10 +149,11 @@ export async function POST(req: Request) {
       product_name: product_name,
       valid_months: valid_months,
     };
+    stage = "save_order";
     const savedOrder = await insertOrder(order);
 
     if (provider === "waffo") {
-      return respData(await createWaffoCheckout(savedOrder, locale));
+      return respData(await createWaffoCheckout(savedOrder, locale, next => { stage = next; }));
     }
     if (provider === "dodo") {
       return respData(await createDodoCheckout(savedOrder, locale));
@@ -175,7 +180,17 @@ export async function POST(req: Request) {
     return respData(result);
   } catch (e: any) {
     // Provider error objects can contain request credentials or checkout tokens.
-    console.error("Checkout could not be started", { provider: process.env.PAY_PROVIDER });
+    const safeCode = (value: unknown) => typeof value === "string" && /^[A-Z0-9_]{1,64}$/.test(value) ? value : undefined;
+    const knownMessages = ["Invalid Waffo credit pack.", "Missing Waffo product mapping.", "Invalid site URL.", "Waffo product lookup failed.", "Waffo catalog does not match this credit pack.", "Invalid Waffo checkout URL."];
+    console.error("Checkout could not be started", {
+      provider: process.env.PAY_PROVIDER, stage,
+      errorName: typeof e?.name === "string" && /^[A-Za-z0-9_]{1,80}$/.test(e.name) ? e.name : "UnknownError",
+      reason: knownMessages.includes(e?.message) ? e.message : undefined,
+      errorCode: safeCode(e?.code), networkCode: safeCode(e?.cause?.code),
+      providerStatus: Number.isInteger(e?.status) ? e.status : Number.isInteger(e?.statusCode) ? e.statusCode : undefined,
+      configured: Object.fromEntries(["WAFFO_MODE", "WAFFO_MERCHANT_ID", "WAFFO_STORE_ID", "WAFFO_PRIVATE_KEY", "WAFFO_PRODUCTS", "DATABASE_URL", "NEXT_PUBLIC_WEB_URL"].map(key => [key, Boolean(process.env[key]?.trim())])),
+      modeValid: ["test", "prod"].includes(process.env.WAFFO_MODE || ""),
+    });
     return Response.json({ code: -1, message: "Could not start checkout. Please try again later." }, { status: 503 });
   }
 }
