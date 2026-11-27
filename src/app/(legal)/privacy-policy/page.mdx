@@ -43,7 +43,7 @@ We use third-party providers to operate the service. Kitchen photos, prompts, an
 
 These providers process information under their own terms and privacy practices. We share only the information reasonably needed to provide the relevant service.
 
-When the Waffo integration is enabled, design prompts are screened by Waffo Prompt Sift. Uploaded photos and generated images are sent through Replicate to the lucataco/flux-content-filter model for safety checks before generation or delivery. Larger images are temporarily uploaded through Replicate's Files API; we attempt to delete those temporary files after the check. Provider retention policies also apply. Kitchen image generation is provided through Replicate; see our [AI model disclosure](/ai-models). We retain moderation verdicts, request identifiers, and related generation records for safety review, support, and payment-provider review. These records are not a public gallery.
+When the Waffo integration is enabled, design instructions are sent to Waffo Prompt Sift for review before generation. We retain prompt-review results, request identifiers, and related generation records for support and review. Uploaded photos and generated results are not sent to a separate image moderation service. Replicate processes images to generate kitchen designs using the configured model and its provider-managed safety controls; see our [AI model disclosure](/ai-models). These records are not a public gallery.
 
 ## Storage and Retention
 

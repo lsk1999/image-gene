@@ -8,10 +8,11 @@ import { KitchenReplicateError, kitchenReplicate } from "@/services/kitchen-repl
 import { imageMime, kitchenParameters, kitchenPrompt } from "@/services/kitchen-design";
 import { CreditsTransType, lockCredits, spendCredits } from "@/services/credit";
 import { KITCHEN_DESIGN_CREDIT_COST } from "@/components/kitchen-design/data";
-import { assertKitchenModerationConfigured, KitchenModerationError, screenKitchenImage, screenKitchenPrompt } from "@/services/kitchen-moderation";
+import { assertKitchenModerationConfigured, KitchenModerationError, KitchenModerationServiceError, screenKitchenPrompt } from "@/services/kitchen-moderation";
 import { reclaimWaffoRefundCredits } from "@/services/waffo-refund-credit";
 
 export const maxDuration = 300;
+const RESULT_PROCESSING_RESERVE_MS = 70_000;
 const fail = (message: string, status: number) => Response.json({ code: -1, message }, { status });
 const refinement = z.object({
   requestId: z.string().uuid(),
@@ -39,7 +40,7 @@ function savedResult(id: string, parameters: unknown, isRefinement: boolean) {
 
 export async function POST(request: Request) {
   const startedAt = Date.now();
-  // Leave time for output screening, storage and the final DB update within maxDuration.
+  // Leave time for storage and the final DB update within maxDuration.
   const safetyEnabled = process.env.PAY_PROVIDER === "waffo";
   const budget = (maxMs: number, reserveMs = 0) => {
     if (!safetyEnabled) return maxMs;
@@ -146,14 +147,10 @@ export async function POST(request: Request) {
     ownsRun = true;
     enterStage("screen_design_prompt");
     await screenKitchenPrompt(id, prompt);
-    if (upload) {
-      enterStage("screen_source_image");
-      await screenKitchenImage(id, upload.bytes, upload.mime, "source_image", budget(90_000, 120_000));
-    }
     const prefix = `kitchen-design/${user}/${id}`;
     if (upload) {
       enterStage("upload_source_to_supabase");
-      await storage.upload(sourceKey, upload.bytes, upload.mime, budget(60_000, 120_000));
+      await storage.upload(sourceKey, upload.bytes, upload.mime, budget(60_000, RESULT_PROCESSING_RESERVE_MS));
     }
     enterStage("sign_source_url");
     const sourceUrl = await storage.createSignedUrl(inputKey);
@@ -162,14 +159,12 @@ export async function POST(request: Request) {
       prompt,
       sourceUrl,
       {
-        timeoutSeconds: Math.floor(budget(isRefinement ? 200_000 : 240_000, 120_000) / 1000),
+        timeoutSeconds: Math.floor(budget(isRefinement ? 200_000 : 240_000, RESULT_PROCESSING_RESERVE_MS) / 1000),
         ...(isRefinement ? { promptUpsampling: false } : {}),
       },
     );
     enterStage("validate_result_image");
     if (imageMime(result) !== "image/png") throw new Error("Invalid generated PNG");
-    enterStage("screen_generated_image");
-    await screenKitchenImage(id, result, "image/png", "output_image", budget(90_000, 25_000));
     const resultKey = `${prefix}/result.png`;
     enterStage("upload_result_to_supabase");
     await storage.upload(resultKey, result, "image/png", budget(60_000, 10_000));
@@ -199,6 +194,9 @@ export async function POST(request: Request) {
       stageElapsedMs: failedAt - stageStartedAt,
       elapsedMs: failedAt - startedAt,
       message: error instanceof Error ? error.message : "Unknown error",
+      ...(error instanceof KitchenModerationServiceError ? {
+        moderationReason: error.reason,
+      } : {}),
       ...(error instanceof KitchenReplicateError ? {
         providerStage: error.stage,
         predictionId: error.predictionId,
@@ -225,6 +223,7 @@ export async function POST(request: Request) {
     }
     if (!ownsRun && (error instanceof z.ZodError || error instanceof SyntaxError)) return fail("Invalid design settings.", 400);
     if (error instanceof KitchenModerationError) return fail(error.message, 400);
+    if (error instanceof KitchenModerationServiceError) return fail(error.message, 503);
     return fail("Could not generate and save the design. Please check History before trying again.", 503);
   }
 }

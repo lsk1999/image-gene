@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { kitchenModelName } from "@/services/kitchen-replicate";
-import { KITCHEN_IMAGE_MODERATION_MODEL } from "@/services/kitchen-replicate-moderation";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -32,13 +31,11 @@ export default function Page() {
         Content safety
       </h2>
       <p>
-        With the Waffo integration enabled, Waffo Prompt Sift screens prompts
-        before generation. Replicate hosts{" "}
-        <strong>{KITCHEN_IMAGE_MODERATION_MODEL}</strong>, which screens source
-        photos and generated results for NSFW content and possible copyrighted
-        characters, trademarks, or public figures. This filter does not generate
-        kitchen images or comprehensively detect every prohibited category.
-        Automated checks have limitations. Please follow our{" "}
+        With the Waffo integration enabled, Waffo Prompt Sift screens design
+        instructions before generation. Uploaded photos and generated results
+        are not scanned by a separate image moderation service. The generation
+        model retains its provider-managed safety controls. These controls do
+        not replace an independent output review. Please follow our{" "}
         <a href="/acceptable-use-policy" className="underline">
           Acceptable Use Policy
         </a>

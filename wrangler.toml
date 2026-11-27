@@ -23,5 +23,5 @@ SUPABASE_STORAGE_BUCKET = "kitchen-design"
 PAY_PROVIDER = "waffo"
 # Complete docs/waffo-payments.md before deploying/enabling checkout.
 # Set WAFFO_MODE, WAFFO_MERCHANT_ID, WAFFO_STORE_ID, WAFFO_PRODUCTS and CHECKOUT_ENABLED in runtime variables.
-# Secrets: WAFFO_PRIVATE_KEY (PEM), REPLICATE_API_TOKEN (generation and image moderation).
+# Secrets: WAFFO_PRIVATE_KEY (prompt moderation and payments), REPLICATE_API_TOKEN (generation).
 # Keep the old DODO_* secrets until all historical payments are settled.

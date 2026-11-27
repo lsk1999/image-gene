@@ -45,7 +45,7 @@ WAFFO_PRODUCTS={"starter":"PROD_实际ID","standard":"PROD_实际ID","premium":"
 
 **共用现有 Supabase：** 按当前项目约定，本地测试继续使用现有 `DATABASE_URL`、Storage bucket 和认证配置，无需新建 Supabase 项目、测试数据库或重新初始化。测试订单、积分和审核记录会真实写入这套数据库，测试付款获得的积分也可被线上同一账户使用。Waffo 本身的测试/正式签名仍须正确匹配：本地先用 `WAFFO_MODE=test` 和相应测试凭证，正式收款使用 `WAFFO_MODE=prod` 及正式凭证、正式商品。共用数据库不会让错误环境的通知通过验签。
 
-`wrangler.toml` 已改成 `PAY_PROVIDER=waffo`。2026-11-27 已将本地 `.env.development` 切为 `PAY_PROVIDER=waffo`、`WAFFO_MODE=test`、`CHECKOUT_ENABLED=false`，补齐 Waffo 凭证、商品映射及可选屏蔽库的空白配置；原有数据库、Supabase、Replicate 和认证值已保留。需要自行填入真实的 `WAFFO_MERCHANT_ID`、`WAFFO_STORE_ID`、`WAFFO_PRIVATE_KEY` 和 3 个商品 ID。不要把空白项当成已配置成功；缺失凭证时付款保持关闭，启用 Waffo 的厨房生成也会报审核配置缺失。填完并完成下面的新增表步骤后再开始测试。
+`wrangler.toml` 已改成 `PAY_PROVIDER=waffo`。2026-11-27 已将本地 `.env.development` 切为 `PAY_PROVIDER=waffo`、`WAFFO_MODE=test`、`CHECKOUT_ENABLED=false`，补齐 Waffo 凭证及商品映射的空白配置；原有数据库、Supabase、Replicate 和认证值已保留。需要自行填入真实的 `WAFFO_MERCHANT_ID`、`WAFFO_STORE_ID`、`WAFFO_PRIVATE_KEY` 和 3 个商品 ID。不要把空白项当成已配置成功；缺失凭证时付款保持关闭，启用 Waffo 的厨房生成也会报审核配置缺失。填完并完成下面的新增表步骤后再开始测试。
 
 `keep_vars=true` 会保留部分 Cloudflare 后台变量，但不会把本地 `.env.development` 自动上传。线上部署仍需在 Worker Variables / Secrets 配置对应值。不要在迁移和审核配置缺失时直接上线。
 
@@ -54,7 +54,7 @@ WAFFO_PRODUCTS={"starter":"PROD_实际ID","standard":"PROD_实际ID","premium":"
 新增 `src/db/migrations/0002_waffo_payments.sql`：
 
 - `payment_events`：已验签通知及幂等记录；
-- `kitchen_moderation`：Prompt Sift requestId、审核模型输出、规则版本与 generation_id 的关联记录。
+- `kitchen_moderation`：当前记录 Prompt Sift requestId、审核结果与 generation_id 的关联；历史图片审核记录保留。
 
 2026-11-27 已用本地配置的 `DATABASE_URL` 只读检查：`users`、`orders`、`credits`、`kitchen_generations` 均已存在；`payment_events`、`kitchen_moderation` 尚不存在。没有执行建表或写入业务数据。
 
@@ -86,19 +86,13 @@ https://aidesignkitchen.com/api/pay/notify/waffo
 
 SDK 使用官方内置的分环境公钥验证原始请求体，采用官方默认 45 分钟签名容差（重试会复用原签名）。验签后还会检查 store、mode、用户标识、本站订单号、服务端 nonce、商品映射、币种、金额和税。只有事务提交后返回 200；失败返回 503 供平台重试。Dashboard 通用 sample event 不含本站订单绑定，不能用来证明真实积分发放；需完成一次真实的 **测试环境 checkout**。
 
-## 5. 生图审核是 Waffo 的要求
+## 5. 当前仅启用 Waffo 提示词审核
 
-`PAY_PROVIDER=waffo` 时，首次生成和 refinement 都先过 Prompt Sift，再调用原有 Replicate 生图模型；新上传原图和每次生成结果通过 Replicate 的 `lucataco/flux-content-filter` 独立审核。Refinement 复用当前账户中已保存的父结果，不新增原图审核，但仍审核新成品。只有通过的结果才会写入成品存储并展示。审核服务失败、review、block、审核记录写库失败均不会绕过检查；任务按现有失败逻辑释放保留的积分。没有异步人工审核队列，review 状态停止本次请求，用户可联系支持申诉。
+按用户明确选择，已移除独立原图审核、成品审核和本地屏蔽库拦截，仅调用 Waffo Prompt Sift。PAY_PROVIDER=waffo 时，首次生成检查最终组装的提示词；refinement 检查本次修改指令。超过接口长度限制时分段审核，只有全部 allow 才继续；block/review 停止生成。Waffo 服务不可用、返回异常或审核记录写库失败也停止生成并沿用失败退积分流程，页面展示提示词未通过、待复核或服务不可用的明确提示。审核记录仅新增 prompt 阶段，并保存 requestId。历史图片审核记录保留，不删表。
 
-图片审核固定版本 `6cde73479afa6189b52903fd968d3b5abadccc514a87b97dfc9ec43179d9f0d3`，NSFW 阈值 0.5。只有完整、有效、未标记的审核结果才能通过；模型内部 `image_error` / `text_error`、缺失分数或异常结构也按审核失败处理。审核记录保存 prediction ID、模型版本、阈值、标记和分数，不保存图片 base64、临时文件地址或原始模型错误日志。单次检查最长 90 秒（含上传和排队，另有少量取消/清理时间）；冷启动可能显著慢于页面标注的典型推理时间。Waffo 生成链路按实际剩余总时间限制审核、生图和存储等待，为成品审核与保存预留时间，避免每一步各自等满而超过路由的 300 秒预算。超时尝试取消，不自动重试创建任务，避免网络中断后重复计费。小于 1 MB 的图片内联发送，较大图片使用 Files API 临时上传，结束后尝试删除临时文件；清理失败会留下运维日志，服务商数据保留政策仍然适用。
+原图上传 → 原模型生成 → PNG 格式校验 → 成品保存和展示。Replicate 只用于生图，不再调用独立图片审核模型或为审核上传临时文件。生成模型自带安全参数保留；格式校验不等同于内容审核。无需 OpenAI 或独立审核模型环境变量，CONTENT_SAFETY_BLOCKLIST 目前不再读取。
 
-新增公开 AUP、模型披露页，更新隐私/退款/服务条款及页脚入口。不要关闭模型自带的安全设置。切换底层模型时，披露页面跟随与生成器相同的配置读取；接入新模型还需核对授权、实际名称和安全设置。
-
-默认规则在 `src/data/kitchen-content-blocklist.json`，是起始规则，**不是完整或自动更新的版权/人物库**。可通过 `CONTENT_SAFETY_BLOCKLIST` 运行时 JSON 覆盖，格式与此文件一致。运营方应定期（例如每周及收到举报后）维护类别、词表和版本日期，并保存人工处理记录。Replicate 过滤器主要覆盖 NSFW 和疑似版权/商标/公众人物，不能区分具体版权问题和具体人物，也不是暴力、仇恨、自残或 CSAM 的专项完整检测器。普通厨房中的品牌标识也可能被误拦截。Prompt Sift、屏蔽词、生成模型原生护栏和图片过滤共同使用，但不能保证发现所有违规内容或确认授权；仍需处理举报并在商户审核前与 Waffo 确认此方案是否满足实际业务要求。代码接入不能保证商户获批。
-
-按 2026-11-27 查到的公开价格估算，当前 `google/nano-banana-2.1` 的 1K 生图每张 $0.0336，过滤器约 $0.00098/次（按运行时间浮动）。首次生成含原图、成品两次图片审核，约 $0.03556/张；refinement 含成品一次审核，约 $0.03458/张。1,000 次成功首次生成约 $35.56。此数不含存储、流量、Worker/数据库、付款手续费、税费和额外失败/重试的成本；模型成功而成品被拦截或保存失败时，已产生的服务商费用不会因本站释放用户积分自动退回。以 Replicate 实际账单和 Waffo 当期 Prompt Sift 计费为准。
-
-过滤器使用 L40S，公开硬件单价 $0.000975/秒。本次真实厨房图审核的 `predict_time` 为 1.619 秒，据此估算该次约 $0.00158（并非已核对账单）；若两次审核都按这个运行时长，首次生成约 $0.03676。实际整次请求耗时约 47 秒，主要还包括上传、排队/冷启动和网络等待；不要把客户端等待秒数直接当作审核推理计费秒数。参考 [Replicate 硬件价格](https://replicate.com/pricing)。
+重要：Waffo 当前 AIGC 文档要求生成前 Prompt Sift 和生成后输出审核。本版本暂时缺少独立输出审核，不能宣称已满足其全部生图审核要求，也不能将模型自带护栏等同于已经运行输出审核。提交正式审核前需要解决该差异；本次改动不保证商户获批。
 
 ## 6. 付款与退款的行为
 
@@ -112,13 +106,15 @@ SDK 使用官方内置的分环境公钥验证原始请求体，采用官方默�
 
 ## 7. 上线前实测
 
-填完本地 Waffo 凭证与商品映射，在现有数据库执行新增表 SQL 后，运行 `pnpm dev`。无需安装或初始化本地 Supabase。先登录并用账户现有积分测试一次生成，检查 `kitchen_moderation` 对应的 prompt/source_image/output_image 记录；refinement 应有 prompt/output_image 记录。审核配置完整、Prompt Sift 可用、Replicate 账户额度足够时才会成功。
+填完本地 Waffo 凭证与商品映射，在现有数据库执行新增表 SQL 后，运行 `pnpm dev`。无需安装或初始化本地 Supabase。先登录并用账户现有积分测试一次生成，检查 `kitchen_moderation` 对应的 prompt 记录；首次生成和 refinement 当前都只新增 prompt 审核记录。审核配置完整、Prompt Sift 可用、Replicate 账户额度足够时才会成功。
 
 要测试付款，再将本地 `CHECKOUT_ENABLED=true`、重启开发服务，并接通匹配模式的公网 Webhook。至少验证三档付款、重复投递、付款后关闭浏览器、重新登录看积分、部分/全额退款、错误签名与环境、已登录直接付款、审核阻止及服务故障不交付未审核图片。`orders` 保存订单，`payment_events` 保存有效付款/退款事件，`credits` 保存积分流水；这些就是当前共用 Supabase 里的实际记录。确认每次交付都能在 `kitchen_moderation` 追溯 requestId。
 
 正式商户审核/KYC/结算账户、正式 key、产品发布和正式 Webhook 都完成后，才在正式部署开启 `CHECKOUT_ENABLED=true`。本次未替你提交审核、配置后台、执行迁移或跑真实付款。只有完成这些实测才能确认线上收款链路可用。
 
 ## 本次代码验证记录
+
+当前版本以第 5 节的“仅 Waffo 提示词审核”为准。已删除独立图片审核适配器及本地屏蔽库，不再调用 lucataco/flux-content-filter 或 falcons-ai/nsfw_image_detection。通过 17 项隔离内存 PostgreSQL 场景验证，涵盖首次/修改成功、只新增 prompt 审核记录、重复请求不重复扣费、Waffo 拦截/待复核/服务异常、审核记录写库失败停止生成并释放积分、无积分/并发/跨账户访问拦截等。没有扣真实用户积分或执行付费生图；以下旧记录仅说明历史验证，不代表当前仍启用图片审核。
 
 2026-11-27 生成全流程复核：本轮共通过 68 项模拟场景（18 项生成路由/历史/图片访问，使用真实 SQL 事务和隔离内存 PostgreSQL；42 项图片审核；8 项生图接口），包括成功扣 1 积分、修改使用父成品与本次指令、重复请求不重复生成、并发请求拒绝、超期任务在下一次生成时释放占用积分、审核/模型/存储失败释放积分、无积分与未登录拦截、跨用户访问拒绝。修正生图轮询未校验原任务 ID、异常创建响应无法利用已返回 ID 取消、未识别 aborted 状态等防御性处理，并清理提前拒绝下载时的响应流。类型检查和 Next.js 生产构建通过，未新增自动测试文件。只读确认现有 Supabase 并发/积分唯一索引及审核表字段齐全，真实 Waffo Prompt Sift 调用返回 allow 和 requestId。没有调用付费厨房生图、修改正式用户积分或部署。
 

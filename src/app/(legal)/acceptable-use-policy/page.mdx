@@ -15,7 +15,7 @@ AI Kitchen Design provides kitchen visualization from photos and design instruct
 
 ## Safety checks
 
-When our Waffo integration is enabled, prompts are screened using Prompt Sift and a platform blocklist, and uploaded photos and generated images are screened through Replicate using lucataco/flux-content-filter before generation or delivery. The image filter checks for NSFW content and possible copyrighted characters, trademarks, or public figures; it is not a comprehensive detector for every prohibited category. Only allowed prompts and images proceed. Requests requiring review are stopped; they are not automatically approved. Moderation failures prevent generation or delivery and trigger our normal release of the reserved design credit. Automated checks can make mistakes and do not establish copyright ownership or guarantee that a design is lawful.
+When our Waffo integration is enabled, design instructions are screened using Waffo Prompt Sift before generation. Requests that are blocked or require review do not proceed. Service errors or failure to retain the review record also stop generation and enter the normal credit-release process. Uploaded photos and generated images do not currently receive a separate image moderation check. Provider-managed generation safety controls remain enabled, but do not replace an independent output review or guarantee that a design is lawful.
 
 We keep moderation request identifiers and verdicts associated with generation records. We review the blocklist and reported cases as part of operating the service. Model safety checks must not be bypassed. The product does not provide a public gallery of user uploads or results.
 
