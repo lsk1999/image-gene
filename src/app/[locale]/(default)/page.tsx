@@ -12,6 +12,7 @@ import Showcase from "@/components/blocks/showcase";
 import Stats from "@/components/blocks/stats";
 import Testimonial from "@/components/blocks/testimonial";
 import { getLandingPage } from "@/services/page";
+import { publicPageRobots } from "@/lib/search-indexing";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,7 @@ export async function generateMetadata({
   }
 
   return {
+    robots: publicPageRobots(locale),
     alternates: {
       canonical: canonicalUrl,
     },

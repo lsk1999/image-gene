@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
 import { Link } from "@/i18n/navigation";
 import KitchenStyleGallery from "@/components/kitchen-style-gallery";
+import { publicPageRobots } from "@/lib/search-indexing";
 
-export const metadata: Metadata = {
-  title: "Kitchen Design Styles | AI Kitchen Design",
-  description: "Explore 18 kitchen design directions, with colors, materials, cabinetry and lighting ideas for your own space.",
-};
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  return {
+    title: "Kitchen Design Styles: Explore 18 Looks for Your Kitchen",
+    description: "Compare 18 kitchen styles, from Japandi to modern farmhouse. Explore colors, cabinetry, countertops and lighting before choosing a direction for your kitchen.",
+    robots: publicPageRobots(locale),
+    alternates: { canonical: "https://aidesignkitchen.com/kitchen-styles" },
+  };
+}
 
 export default async function KitchenStylesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;

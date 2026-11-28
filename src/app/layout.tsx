@@ -1,8 +1,12 @@
 import "@/app/globals.css";
 
 import { getLocale, setRequestLocale } from "next-intl/server";
-import { locales } from "@/i18n/locale";
-import { cn } from "@/lib/utils";
+import type { Metadata } from "next";
+
+// Default-deny indexing. Only the four public landing pages opt in locally.
+export const metadata: Metadata = {
+  robots: { index: false, follow: true, googleBot: { index: false, follow: true } },
+};
 
 export default async function RootLayout({
   children,
@@ -12,7 +16,6 @@ export default async function RootLayout({
   const locale = await getLocale();
   setRequestLocale(locale);
 
-  const webUrl = process.env.NEXT_PUBLIC_WEB_URL || "";
   const googleAdsenseCode = process.env.NEXT_PUBLIC_GOOGLE_ADCODE || "";
 
   return (
@@ -29,16 +32,6 @@ export default async function RootLayout({
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="apple-touch-icon" sizes="180x180" href="/imgs/seo/apple-touch-icon.png" />
 
-        {locales &&
-          locales.map((loc) => (
-            <link
-              key={loc}
-              rel="alternate"
-              hrefLang={loc}
-              href={`${webUrl}${loc === "en" ? "" : `/${loc}`}/`}
-            />
-          ))}
-        <link rel="alternate" hrefLang="x-default" href={webUrl} />
       </head>
       <body>{children}</body>
     </html>

@@ -2,16 +2,21 @@ import type { Metadata } from "next";
 import { ArrowDown, ArrowRight, Camera, Check, Layers3, MessageSquare, Sparkles } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import CopyPrompt from "@/components/kitchen-guide/copy-prompt";
+import { publicPageRobots } from "@/lib/search-indexing";
 
 const canonical = "https://aidesignkitchen.com/chatgpt-kitchen-design";
 const title = "ChatGPT Kitchen Design: How to Redesign Your Kitchen From a Photo";
 const description = "Learn how to use ChatGPT for kitchen design with your own photo, practical prompts, and tips for keeping the details that matter.";
-export const metadata: Metadata = {
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  return {
+  robots: publicPageRobots(locale),
   title, description, keywords: ["ChatGPT kitchen design", "kitchen design prompts", "kitchen redesign from photo"],
   alternates: { canonical },
   openGraph: { title, description, url: canonical, type: "article", images: [{ url: "https://aidesignkitchen.com/imgs/kitchen-styles/organic-modern.jpg", width: 1200, height: 900, alt: "Warm wood kitchen with a white stone island" }] },
   twitter: { card: "summary_large_image", title, description, images: ["https://aidesignkitchen.com/imgs/kitchen-styles/organic-modern.jpg"] },
-};
+  };
+}
 
 const steps = [
   { icon: Camera, title: "Start with your actual room", text: "Upload a clear photo in ChatGPT. Include the main cabinets, windows and appliances. A level, well-lit photo makes comparison easier. Add measurements separately: a photo cannot establish exact dimensions." },
