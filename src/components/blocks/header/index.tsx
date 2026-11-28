@@ -50,7 +50,7 @@ export default function Header({ header }: { header: HeaderType }) {
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
       <div className="container">
-        <nav className="hidden min-h-24 items-center justify-between gap-8 lg:flex" aria-label="Main navigation">
+        <nav className="hidden min-h-24 items-center justify-between gap-8 xl:flex" aria-label="Main navigation">
           <div className="flex min-w-0 items-center gap-7 xl:gap-12">
             <Brand header={header} />
             <div className="flex shrink-0 items-center gap-1 xl:gap-2">
@@ -93,7 +93,7 @@ export default function Header({ header }: { header: HeaderType }) {
           </div>
         </nav>
 
-        <div className="flex min-h-20 items-center justify-between gap-2 sm:gap-4 lg:hidden">
+        <div className="flex min-h-20 items-center justify-between gap-2 sm:gap-4 xl:hidden">
           <Brand header={header} compact />
           <div className="flex shrink-0 items-center gap-2">
             <CreditsDisplay />

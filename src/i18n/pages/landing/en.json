@@ -6,6 +6,7 @@
     "nav": {
       "items": [
         { "title": "How it works", "url": "/#how-it-works", "icon": "RiPlayCircleLine" },
+        { "title": "Design styles", "url": "/kitchen-styles", "icon": "RiPaletteLine" },
         { "title": "Blog", "url": "/blog", "icon": "RiArticleLine" },
         { "title": "Pricing", "url": "/pricing", "icon": "RiMoneyDollarCircleLine" },
         { "title": "Kitchen Designer", "url": "/ai-kitchen-design", "icon": "RiSparkling2Line" }

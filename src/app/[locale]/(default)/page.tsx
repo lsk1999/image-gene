@@ -1,7 +1,7 @@
 import Branding from "@/components/blocks/branding";
 import CTA from "@/components/blocks/cta";
 import FAQ from "@/components/blocks/faq";
-import Feature from "@/components/blocks/feature";
+import KitchenStyleGallery from "@/components/kitchen-style-gallery";
 import Feature1 from "@/components/blocks/feature1";
 import Feature2 from "@/components/blocks/feature2";
 import Feature3 from "@/components/blocks/feature3";
@@ -49,7 +49,7 @@ export default async function LandingPage({
       {page.introduce && <Feature1 section={page.introduce} />}
       {page.benefit && <Feature2 section={page.benefit} />}
       {page.usage && <Feature3 section={page.usage} />}
-      {page.feature && <Feature section={page.feature} />}
+      {page.feature && !page.feature.disabled && <KitchenStyleGallery locale={locale} featured />}
       {page.showcase && <Showcase section={page.showcase} />}
       {page.stats && <Stats section={page.stats} />}
       {page.pricing && <Pricing pricing={page.pricing} {...paymentSettings()} />}

@@ -6,6 +6,7 @@
     "nav": {
       "items": [
         { "title": "使用流程", "url": "/#how-it-works", "icon": "RiPlayCircleLine" },
+        { "title": "设计风格", "url": "/kitchen-styles", "icon": "RiPaletteLine" },
         { "title": "Blog", "url": "/blog", "icon": "RiArticleLine" },
         { "title": "价格", "url": "/pricing", "icon": "RiMoneyDollarCircleLine" },
         { "title": "厨房设计工具", "url": "/ai-kitchen-design", "icon": "RiSparkling2Line" }
